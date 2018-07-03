@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-#
-import os
 import gevent.monkey
 gevent.monkey.patch_all()
-import logging
 import logging.handlers
 from logging.handlers import WatchedFileHandler
 
