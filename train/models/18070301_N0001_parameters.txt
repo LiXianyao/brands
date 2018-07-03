@@ -1,0 +1,2 @@
+{'num_class': 2, 'silent': 1, 'colsample_bylevel': 0.8, 'nthread': 15, 'subsample': 0.7, 'eta': 0.25, 'objective': 'multi:softprob', 'colsample_bytree': 0.8, 'max_depth': 10}
+{'num_boost_round': 1000, 'early_stopping_rounds': 50}

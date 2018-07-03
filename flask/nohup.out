@@ -1,0 +1,737 @@
+smart_open library not found; falling back to local-filesystem-only
+>> Synonyms load wordseg dict [/usr/lib/python2.7/site-packages/synonyms/data/vocab.txt] ... 
+>> Synonyms on loading stopwords [/usr/lib/python2.7/site-packages/synonyms/data/stopwords.txt] ...
+>> Synonyms on loading vectors [/usr/lib/python2.7/site-packages/synonyms/data/words.vector] ...
+key rd::1 has  21250
+key rd::2 has  11502
+key rd::3 has  60705
+key rd::4 has  7627
+key rd::5 has  55598
+key rd::6 has  25834
+key rd::7 has  40321
+key rd::8 has  9513
+key rd::9 has  106113
+key rd::10 has  16728
+key rd::11 has  59141
+key rd::12 has  27780
+key rd::13 has  1853
+key rd::14 has  24802
+key rd::15 has  3577
+key rd::16 has  28555
+key rd::17 has  9864
+key rd::18 has  30132
+key rd::19 has  23934
+key rd::20 has  37758
+key rd::21 has  27714
+key rd::22 has  4279
+key rd::23 has  2667
+key rd::24 has  21831
+key rd::25 has  175784
+key rd::26 has  6426
+key rd::27 has  8365
+key rd::28 has  22939
+key rd::29 has  64617
+key rd::30 has  92842
+key rd::31 has  36168
+key rd::32 has  28506
+key rd::33 has  26387
+key rd::34 has  4609
+key rd::35 has  114238
+key rd::36 has  22400
+key rd::37 has  18841
+key rd::38 has  14248
+key rd::39 has  17881
+key rd::40 has  9763
+key rd::41 has  42603
+key rd::42 has  46807
+key rd::43 has  55451
+key rd::44 has  20123
+key rd::45 has  10640
+history brand ready
+industry : ==============================>>>
+ImmutableMultiDict([])
+{u'text': {u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}}
+{u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}
+pinyin = [u'ning', u'meng', u'xuan']
+brand name is 柠檬轩, with searching class: set([43, 44])
+43
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 6
+py combi xuan ning has 2
+py combi meng ning has 34
+py union has 40
+柠檬日记 15540747
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+红柠檬 15528167
+(0.33, 0.43, 0.67, 0.67, 0.61, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬宣言 15579778
+(0.5, 0.78, 0.67, 0.5, 0.84, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬菓珍 20597539
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬冰 15647751
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬树 9791675
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+彩色柠檬 14393019
+(0.25, 0.31, 0.67, 0.5, 0.46, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬码头 21488997
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬渔村 20769353
+(0.5, 0.75, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬密码 15567067
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬季 15540748
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬船 15559415
+(0.67, 0.87, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+甜心柠檬 21442998
+(0.25, 0.33, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+44
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 5
+柠檬草 16710144
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.89, 0.0, 0.0, 0.0, 0.0)
+金柠檬 15441652
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+绿柠檬 15819171
+(0.33, 0.43, 0.67, 0.67, 0.65, 0.79, 0.0, 0.0, 0.0, 0.0)
+start at 20180702221749, end at 20180702221751
+industry : ==============================>>>
+ImmutableMultiDict([])
+{u'text': {u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}}
+{u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}
+pinyin = [u'ning', u'meng', u'xuan']
+brand name is 柠檬轩, with searching class: set([43, 44])
+43
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 6
+py combi xuan ning has 2
+py combi meng ning has 34
+py union has 40
+柠檬日记 15540747
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+红柠檬 15528167
+(0.33, 0.43, 0.67, 0.67, 0.61, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬宣言 15579778
+(0.5, 0.78, 0.67, 0.5, 0.84, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬菓珍 20597539
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬冰 15647751
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬树 9791675
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+彩色柠檬 14393019
+(0.25, 0.31, 0.67, 0.5, 0.46, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬码头 21488997
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬渔村 20769353
+(0.5, 0.75, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬密码 15567067
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬季 15540748
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬船 15559415
+(0.67, 0.87, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+甜心柠檬 21442998
+(0.25, 0.33, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+44
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 5
+柠檬草 16710144
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.89, 0.0, 0.0, 0.0, 0.0)
+金柠檬 15441652
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+绿柠檬 15819171
+(0.33, 0.43, 0.67, 0.67, 0.65, 0.79, 0.0, 0.0, 0.0, 0.0)
+start at 20180702221841, end at 20180702221841
+industry : ==============================>>>
+ImmutableMultiDict([])
+{u'text': {u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}}
+{u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}
+pinyin = [u'ning', u'meng', u'xuan']
+brand name is 柠檬轩, with searching class: set([43, 44])
+43
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 6
+py combi xuan ning has 2
+py combi meng ning has 34
+py union has 40
+柠檬日记 15540747
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+红柠檬 15528167
+(0.33, 0.43, 0.67, 0.67, 0.61, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬宣言 15579778
+(0.5, 0.78, 0.67, 0.5, 0.84, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬菓珍 20597539
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬冰 15647751
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬树 9791675
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+彩色柠檬 14393019
+(0.25, 0.31, 0.67, 0.5, 0.46, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬码头 21488997
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬渔村 20769353
+(0.5, 0.75, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬密码 15567067
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬季 15540748
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬船 15559415
+(0.67, 0.87, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+甜心柠檬 21442998
+(0.25, 0.33, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+44
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 5
+柠檬草 16710144
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.89, 0.0, 0.0, 0.0, 0.0)
+金柠檬 15441652
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+绿柠檬 15819171
+(0.33, 0.43, 0.67, 0.67, 0.65, 0.79, 0.0, 0.0, 0.0, 0.0)
+start at 20180702221859, end at 20180702221900
+industry : ==============================>>>
+ImmutableMultiDict([])
+{u'text': {u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}}
+{u'apply_date': u'2018\u5e7401\u670805\u65e5', u'name': u'\u67e0\u6aac\u8f69', u'class': [43, 44]}
+pinyin = [u'ning', u'meng', u'xuan']
+brand name is 柠檬轩, with searching class: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]
+1
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 0
+2
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 0
+py combi meng ning has 1
+py union has 1
+金柠檬 16491871
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+3
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 6
+py combi xuan ning has 1
+py combi meng ning has 9
+py union has 16
+蓝柠檬 19128422
+(0.33, 0.36, 0.67, 0.67, 0.59, 0.77, 0.0, 0.0, 0.0, 0.0)
+金柠檬 15441594
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬树 1612346
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+4
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 0
+5
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 1
+py combi meng ning has 3
+py union has 4
+6
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 1
+py combi meng ning has 0
+py union has 1
+7
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 1
+py union has 2
+柠檬鲨 21110027
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+8
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 1
+9
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 11
+py union has 13
+柠檬鲨 21110027
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+车柠檬 15632744
+(0.33, 0.36, 0.67, 0.67, 0.63, 0.86, 0.0, 0.0, 0.0, 0.0)
+金柠檬 15831763
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬果 16503658
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.83, 0.0, 0.0, 0.0, 0.0)
+绿柠檬 15819171
+(0.33, 0.43, 0.67, 0.67, 0.65, 0.79, 0.0, 0.0, 0.0, 0.0)
+柠檬心理 16362738
+(0.5, 0.69, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+10
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 0
+py combi meng ning has 2
+py union has 2
+一颗柠檬 15587738
+(0.25, 0.33, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+11
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 1
+py union has 2
+小柠檬 16700342
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+12
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 0
+py combi meng ning has 2
+py union has 2
+车柠檬 15632620
+(0.33, 0.36, 0.67, 0.67, 0.63, 0.86, 0.0, 0.0, 0.0, 0.0)
+13
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 0
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 0
+14
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 6
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 6
+15
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 1
+16
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 3
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 7
+太空柠檬 15895776
+(0.25, 0.39, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+17
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 1
+18
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 5
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 9
+小柠檬 16700540
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬草 19083674
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.89, 0.0, 0.0, 0.0, 0.0)
+19
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 1
+py union has 3
+柠檬小镇 16994311
+(0.5, 0.68, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+20
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 13
+py combi xuan ning has 1
+py combi meng ning has 4
+py union has 18
+柠檬果 14584512
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.83, 0.0, 0.0, 0.0, 0.0)
+金柠檬 12244773
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬家具 16152539
+(0.5, 0.69, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+21
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 1
+py union has 3
+22
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 2
+23
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 2
+24
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 7
+py combi xuan ning has 0
+py combi meng ning has 8
+py union has 15
+柠檬女孩 15374519
+(0.5, 0.69, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬花语 13826576
+(0.5, 0.75, 0.67, 0.5, 0.84, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬百合 21392604
+(0.5, 0.63, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬心 21907585
+(0.67, 0.86, 0.67, 0.67, 0.91, 0.71, 0.0, 0.0, 0.0, 0.0)
+25
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 23
+py combi xuan ning has 1
+py combi meng ning has 43
+py union has 65
+柠檬谷 21900094
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.67, 0.0, 0.0, 0.0, 0.0)
+魔力柠檬 11370966
+(0.25, 0.27, 0.67, 0.5, 0.48, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬小鱼 21460641A
+(0.5, 0.71, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬时光 21012367
+(0.5, 0.68, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬茶 13181815
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬堂 15369394
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.82, 0.0, 0.0, 0.0, 0.0)
+柠檬宣言 14413615
+(0.5, 0.78, 0.67, 0.5, 0.84, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬物语 18417968
+(0.5, 0.73, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+秋水柠檬 16338633
+(0.25, 0.28, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬之恋 16717753
+(0.5, 0.67, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬古力 14597222
+(0.5, 0.73, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬贝贝 16951533
+(0.5, 0.59, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+沙漠柠檬 11833434
+(0.25, 0.25, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬传说 14512131
+(0.5, 0.65, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+珊叶柠檬 15525988
+(0.25, 0.29, 0.67, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬森林 13140880
+(0.5, 0.65, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+冰柠檬 4337749
+(0.33, 0.5, 0.67, 0.67, 0.58, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬依恋 16139022
+(0.5, 0.71, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+小柠檬 16700626
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬公园 15723296
+(0.5, 0.68, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬酸酸 12627211
+(0.5, 0.68, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+26
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 3
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 3
+27
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 2
+28
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 3
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 7
+珊叶柠檬 15526106
+(0.25, 0.29, 0.67, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0)
+29
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 3
+py combi xuan ning has 2
+py combi meng ning has 10
+py union has 15
+左柠右檬 15805747
+(0.25, 0.29, 0.33, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬小镇 15672870
+(0.5, 0.68, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬树 9791576
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+华信柠檬 15484961
+(0.25, 0.29, 0.67, 0.5, 0.44, 0.0, 0.0, 0.0, 0.0, 0.0)
+30
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 4
+py combi xuan ning has 3
+py combi meng ning has 18
+py union has 25
+海岩柠檬 16550687
+(0.25, 0.29, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+海言柠檬 16260956
+(0.25, 0.29, 0.67, 0.5, 0.44, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬瘦 16708447
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬小镇 15672869
+(0.5, 0.68, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬E家 16288084
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.7, 0.0, 0.0, 0.0, 0.0)
+柠檬树 9791609
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+柠檬觉醒 15513319
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+31
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 5
+py union has 7
+德宏柠檬 16568654
+(0.25, 0.35, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬农场 15523861
+(0.5, 0.6, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬君 16260002
+(0.67, 0.86, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+32
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 30
+py union has 32
+柠檬酷厘 17830766A
+(0.5, 0.73, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬君 16260001
+(0.67, 0.86, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+柠檬密码 15668716
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+极地柠檬 21659521
+(0.25, 0.33, 0.67, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬初上 21082647
+(0.5, 0.68, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬日记 15668715
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+海言柠檬 16260955
+(0.25, 0.29, 0.67, 0.5, 0.44, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬国度 16385730
+(0.5, 0.69, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬唯 16538506
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.85, 0.0, 0.0, 0.0, 0.0)
+33
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 3
+py combi xuan ning has 1
+py combi meng ning has 1
+py union has 5
+柠檬树 9791630
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+34
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 1
+35
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 11
+py combi xuan ning has 1
+py combi meng ning has 31
+py union has 43
+红柠檬 15528168
+(0.33, 0.43, 0.67, 0.67, 0.61, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬萃 16662157
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.82, 0.0, 0.0, 0.0, 0.0)
+柠檬觉醒 15514580
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+欢乐柠檬 16534405
+(0.25, 0.29, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+百香柠檬 16932551
+(0.25, 0.37, 0.67, 0.5, 0.46, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬大叔 19342726
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+太空柠檬 15899211
+(0.25, 0.39, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬工坊 16129195
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+汇达柠檬 16081090
+(0.25, 0.31, 0.67, 0.5, 0.48, 0.0, 0.0, 0.0, 0.0, 0.0)
+鲜活柠檬 16321816
+(0.25, 0.33, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+珊叶柠檬 15525920
+(0.25, 0.29, 0.67, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0)
+开心柠檬 15482195
+(0.25, 0.29, 0.67, 0.5, 0.48, 0.0, 0.0, 0.0, 0.0, 0.0)
+甜柠檬 16045196
+(0.33, 0.36, 0.67, 0.67, 0.64, 0.82, 0.0, 0.0, 0.0, 0.0)
+柠檬生活 16235645
+(0.5, 0.58, 0.67, 0.5, 0.87, 0.0, 0.0, 0.0, 0.0, 0.0)
+小柠檬 16700881
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+36
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 3
+py union has 5
+柠檬客 17214997
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.7, 0.0, 0.0, 0.0, 0.0)
+37
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 5
+py union has 7
+车柠檬 15641017
+(0.33, 0.36, 0.67, 0.67, 0.63, 0.86, 0.0, 0.0, 0.0, 0.0)
+小柠檬 16701069
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+38
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 3
+py union has 5
+车柠檬 15641096
+(0.33, 0.36, 0.67, 0.67, 0.63, 0.86, 0.0, 0.0, 0.0, 0.0)
+太空柠檬 15899290
+(0.25, 0.39, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+39
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 0
+py union has 2
+40
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 2
+py combi xuan ning has 0
+py combi meng ning has 2
+py union has 4
+柠檬树 7589397
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+41
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 4
+py combi xuan ning has 0
+py combi meng ning has 15
+py union has 19
+太空柠檬 15899433
+(0.25, 0.39, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬豆豆 15920892
+(0.5, 0.65, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬健康 16742170
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬姐姐 16841667
+(0.5, 0.59, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+露露柠檬 15813995
+(0.25, 0.27, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬花开 19871531
+(0.5, 0.71, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬湾 17607962
+(0.67, 0.86, 0.67, 0.67, 0.92, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬云 23046899
+(0.67, 0.86, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+小柠檬 15562348
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+42
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 4
+py combi xuan ning has 0
+py combi meng ning has 11
+py union has 15
+小柠檬 16704707
+(0.33, 0.36, 0.67, 0.67, 0.65, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬盛世 16480673
+(0.5, 0.58, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬觉醒 15514839
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬健康 16742205
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+太空柠檬 15899620
+(0.25, 0.39, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬云 23047008
+(0.67, 0.86, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+绿柠檬 15819171
+(0.33, 0.43, 0.67, 0.67, 0.65, 0.79, 0.0, 0.0, 0.0, 0.0)
+车柠檬 15641145
+(0.33, 0.36, 0.67, 0.67, 0.63, 0.86, 0.0, 0.0, 0.0, 0.0)
+43
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 6
+py combi xuan ning has 2
+py combi meng ning has 34
+py union has 40
+柠檬日记 15540747
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+红柠檬 15528167
+(0.33, 0.43, 0.67, 0.67, 0.61, 0.81, 0.0, 0.0, 0.0, 0.0)
+柠檬宣言 15579778
+(0.5, 0.78, 0.67, 0.5, 0.84, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬菓珍 20597539
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬冰 15647751
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.71, 0.0, 0.0, 0.0, 0.0)
+柠檬树 9791675
+(0.67, 0.71, 0.67, 0.67, 0.91, 0.78, 0.0, 0.0, 0.0, 0.0)
+彩色柠檬 14393019
+(0.25, 0.31, 0.67, 0.5, 0.46, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬码头 21488997
+(0.5, 0.63, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬渔村 20769353
+(0.5, 0.75, 0.67, 0.5, 0.86, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬密码 15567067
+(0.5, 0.67, 0.67, 0.5, 0.85, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬季 15540748
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.75, 0.0, 0.0, 0.0, 0.0)
+柠檬船 15559415
+(0.67, 0.87, 0.67, 0.67, 0.92, 0.76, 0.0, 0.0, 0.0, 0.0)
+甜心柠檬 21442998
+(0.25, 0.33, 0.67, 0.5, 0.47, 0.0, 0.0, 0.0, 0.0, 0.0)
+44
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 4
+py union has 5
+柠檬草 16710144
+(0.67, 0.79, 0.67, 0.67, 0.92, 0.89, 0.0, 0.0, 0.0, 0.0)
+金柠檬 15441652
+(0.33, 0.43, 0.67, 0.67, 0.6, 0.75, 0.0, 0.0, 0.0, 0.0)
+绿柠檬 15819171
+(0.33, 0.43, 0.67, 0.67, 0.65, 0.79, 0.0, 0.0, 0.0, 0.0)
+45
+set([u'xuan', u'meng', u'ning']) [u'ning', u'meng', u'xuan']
+py combi xuan meng has 1
+py combi xuan ning has 0
+py combi meng ning has 3
+py union has 4
+柠檬客 17214997
+(0.67, 0.71, 0.67, 0.67, 0.92, 0.7, 0.0, 0.0, 0.0, 0.0)
+太空柠檬 15899739
+(0.25, 0.39, 0.67, 0.5, 0.49, 0.0, 0.0, 0.0, 0.0, 0.0)
+柠檬镇 16022522
+(0.67, 0.79, 0.67, 0.67, 0.91, 0.8, 0.0, 0.0, 0.0, 0.0)
+start at 20180702221959, end at 20180702222002
+总计有 140 结果
