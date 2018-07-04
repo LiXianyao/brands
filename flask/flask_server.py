@@ -7,10 +7,9 @@ import os
 import ConfigParser
 import redis
 import time
-import re
 import threading
 import traceback
-from train import form_pre_data_IV_flask, form_train_data_IV
+from train import form_pre_data_IV_flask
 
 file_prefix = "./models/"
 pid = str( os.getpid() )
