@@ -158,3 +158,8 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 
+##输入数据中间文件
+train/data/
+flask/data/
+train/testRes/
+train/models/
