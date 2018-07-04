@@ -97,7 +97,7 @@ def analysis_product_list(line):
 ###redis数据库
 def form_train_data_redis(lowb, num):
     row_len = 9
-    file_names = range(7, 9)##其实就是从a.csv到b.csv里面获取数据
+    file_names = range(3, 6)##其实就是从a.csv到b.csv里面获取数据
 
     item_dict = load_brand_item()
     db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=default_pwd)
@@ -114,7 +114,7 @@ def form_train_data_redis(lowb, num):
     rset_key_prefix = "rset::"
     detail_key_prefix = "dtl::"
 
-    csv_name = u"data/origin/train_7_4_1.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
+    csv_name = u"data/origin/train_7_4_2.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
     title = []
     if os.path.exists(csv_name) == False:
         ###文件不存在，则把表头写一下
@@ -344,6 +344,7 @@ def getHistoryBrandWithTime(record_key_prefix, db):
             cnt_id += 1
     return record_id_dict , record_key_time_dict
 
+####两个商标计算相似度，按gate阈值过滤
 def compute_similar(brand_name, his_name, gate):
     compare_Res = getCharacteristics(brand_name, his_name)
     similar = False
