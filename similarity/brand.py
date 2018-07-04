@@ -34,17 +34,17 @@ def init_String(_str):
     str_china = ""
     str_char_2 = ""  ##英文单词用空格分开，用在英文排列组合中
     for i in str:
+        #print i
         # 字符串拼接
-        if isNum(i):
-            # key = key +1
-            str_num = str_num + i
-        elif isChina(i):
+        if isChina(i):
             str_china = str_china + i
         else:
-            if i == u" " or i == u";":
+            if i == u" " or i == u";" or i == u"":
                 continue
-            str_char = str_char + i + (" " * len(i))
-            str_char_2 = str_char_2 + i + " "
+            s_num_str, s_eng_str, s_eng_str_2 = split_not_china(i) ###非中文串，可能是单纯的数字或者字母串，也可能是混合串，拆一下
+            str_char = str_char + s_eng_str
+            str_char_2 = str_char_2 + s_eng_str_2
+            str_num = str_num + s_num_str
 
     return str_num,str_char,str_china,str_char_2
 
@@ -57,6 +57,22 @@ def get_china_str(_str):
             str_china = str_china + i
 
     return str_china
+
+#拆分非中文字符串，将相邻的字母视作一个词，相邻的数字视作一个数
+def split_not_china(_str):
+    split_list = re.findall(u"[a-zA-Z][a-z]+|[A-Z][A-Z]*|[0-9]+", _str)
+    num_str = ""
+    eng_str = ""
+    eng_str_2 = ""
+    for str_i in split_list:
+        if isNum(str_i):
+            num_str += str_i
+        else:
+            str_i = str_i.lower()
+            eng_str = eng_str + str_i + (" " * len(str_i))
+            eng_str_2 = eng_str_2 + str_i + " "
+
+    return num_str, eng_str, eng_str_2
 
 
 
@@ -107,7 +123,6 @@ def inclusion_Eng(_str1,_str2):
 
     list1 = [x for x in _str1.split(" ")]
     list2 = [x for x in _str2.split(" ")]
-
     list1.pop()
     list2.pop()
 
@@ -158,9 +173,15 @@ def combination_Eng(_str1,_str2):
 
     list1.pop()
     list2.pop()
-
-    ans = [val for val in list1 if val in list2]
-    return len(ans)/max(len(list1), len(list2))
+    vis_list2 = [False] * len(list2)
+    ans = 0
+    for char_1 in list1:
+        for i_2 in range(len(list2)):
+            if (vis_list2[i_2] == True)or (char_1 != list2[i_2]):
+                continue
+            ans += 1
+            vis_list2[i_2] = True
+    return ans/len(list1)
 
 
 # 中文拼音编辑距离
