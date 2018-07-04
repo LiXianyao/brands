@@ -97,7 +97,7 @@ def analysis_product_list(line):
 ###redis数据库
 def form_train_data_redis(lowb, num):
     row_len = 9
-    file_names = range(3, 6)
+    file_names = range(7, 9)##其实就是从a.csv到b.csv里面获取数据
 
     item_dict = load_brand_item()
     db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=default_pwd)
@@ -114,7 +114,7 @@ def form_train_data_redis(lowb, num):
     rset_key_prefix = "rset::"
     detail_key_prefix = "dtl::"
 
-    csv_name = u"train_7_3_2.csv"
+    csv_name = u"data/origin/train_7_4_1.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
     title = []
     if os.path.exists(csv_name) == False:
         ###文件不存在，则把表头写一下
@@ -257,6 +257,7 @@ def form_train_data_redis(lowb, num):
                 if cnt_status['0'] >= (lowb + num) and cnt_status["1"] >= (lowb + num):
                     break
             del reader
+            print "csv %s end"%file_name
         if cnt_status['0'] >= (lowb + num) and cnt_status["1"] >= (lowb + num):
             break
     f_out.close()
@@ -273,10 +274,13 @@ def compute_py_lowb(brand_name_pinyin):
         return max(int(len(b_list) * 0.76), 2)
 
 ###判断两个商标中是否有同音
-def judge_pinyin(brand_name, his_name):
-    b_list = lazy_pinyin(brand_name)
-    h_list = lazy_pinyin(his_name)
+def judge_pinyin(brand_name_pinyin, his_name_pinyin):
+    b_list = brand_name_pinyin
+    h_list = his_name_pinyin
     h_vis = form_vis_list(h_list)
+    maxl = max(len(b_list), len(h_list))
+    if maxl > len(b_list) * 2 + 1:
+        return False
 
     cnt_comm = 0
     for i in range(len(b_list)):
@@ -286,18 +290,13 @@ def judge_pinyin(brand_name, his_name):
                 h_vis[j] = True
                 break
 
-    maxl = max(len(b_list), len(h_list))
-
-    if cnt_comm == len(b_list) and maxl <= len(b_list) * 3:
-        #print b_list, h_list, cnt_comm
+    if len(b_list) < 3 and cnt_comm == len(b_list):
+        # print b_list, h_list, cnt_comm
+        return True
+    elif len(brand_name_pinyin) >= 3 and cnt_comm >= max(int(maxl * 0.76), 2):  #
+        # print b_list,h_list
         return True
 
-    if len(b_list) < 3 and cnt_comm == len(b_list) and maxl <= len(b_list) * 3:
-        #print b_list, h_list, cnt_comm
-        return True
-    elif len(brand_name) >= 3 and cnt_comm >= int(maxl * 0.76):#
-        #print b_list,h_list
-        return True
     return False
 
 def form_vis_list(a_list):

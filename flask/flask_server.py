@@ -78,6 +78,31 @@ def predictAllRes():
     return resp
 
 @app.route('/predictAll/onlyName', methods=['POST'])
+def predictAllOnlyName():
+    print "All onlyName : ==============================>>>"
+    #print request.form
+    #print request.json
+    if request.method == 'POST':
+        try:
+            text = request.form['text']
+            input_json = json.loads(text)
+            #print input_json
+        except:
+            input_json = request.json['text']
+            #print input_json
+
+    try:
+        res = predict(input_json, AllClass = True, AllRes=False)
+        #print res, type(res)
+    except:
+        input_json["resultCode"] = "0"
+        input_json["message"] = "错误的表单数据!"
+        res =json.dumps(input_json, ensure_ascii=False)
+
+    resp = make_response(res)
+    resp.mimetype = 'application/json'
+    return resp
+
 @app.route('/predictAll/allRes', methods=['POST'])
 def predictAllAllRes():
     print "All allRes : ==============================>>>"
@@ -93,7 +118,7 @@ def predictAllAllRes():
             #print input_json
 
     try:
-        res = predict(input_json, AllClass = True, AllRes=False)
+        res = predict(input_json, AllClass = True, AllRes=True)
         #print res, type(res)
     except:
         input_json["resultCode"] = "0"
@@ -151,8 +176,12 @@ def predict(input_json, AllClass = False, AllRes = False):
 
 @app.route('/reload/prediction', methods=['POST'])
 def reloadPrediction():
-    reload(form_pre_data_IV_flask)
-    res = {"message": "prediction 模块重置成功！"}
+    try:
+        reload(form_pre_data_IV_flask)
+        res = {"message": "prediction 模块重置成功！"}
+    except:
+        print traceback.format_exc()
+        res = {"message": "prediction 模块重置失败！！检查日志"}
     res = json.dumps(res, ensure_ascii=False)
     resp = make_response(res)
     resp.mimetype = 'application/json'

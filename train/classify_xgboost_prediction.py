@@ -36,13 +36,12 @@ def test_model(action_parameters_dict, input_file_name):
     y_hat是预测结果矩阵，每行有标签数个小数，和为1.0
     y是训练数据里写的，原标签的号数（0开始）
     """
-    nowtime = time.strftime("%Y%m%d%H%M%S", time.localtime())
     start_time_s = datetime.datetime.now()
     y_hat = bst.predict(data_test)
-    endtime = time.strftime("%Y%m%d%H%M%S", time.localtime())
     end_time_s = datetime.datetime.now()
     cost_time_s = (end_time_s - start_time_s).microseconds
     test_size = data_test.num_row()
+    print "模型计算消耗时间:",cost_time_s
 
     predict_res = []
     for i in range(test_size):

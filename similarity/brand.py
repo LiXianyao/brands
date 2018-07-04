@@ -138,8 +138,15 @@ def combination(_str1,_str2):
 
     list1 = list(_str1)
     list2 = list(_str2)
-    ans = [val for val in list1 if val in list2]
-    return len(ans)/max(len(list1), len(list2))
+    vis_list2 = [False] * len(list2)
+    ans = 0
+    for char_1 in list1:
+        for i_2 in range(len(list2)):
+            if (vis_list2[i_2] == True)or (char_1 != list2[i_2]):
+                continue
+            ans += 1
+            vis_list2[i_2] = True
+    return ans/len(list1)
 
 # 英文 文字排列组合方式
 def combination_Eng(_str1,_str2):

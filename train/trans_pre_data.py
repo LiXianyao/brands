@@ -61,13 +61,14 @@ def  compute_class_through_rate(data_list, item_list, predict_res, class_no_set)
         res_dict[class_no][u"名字近似度列表"].append(his_name + " " + attribute_title[max_attri_index] + " " + str(max_attri * 100.0) + "%")
         for item in item_list[i]:
             if res_dict[class_no][u"商品项及注册成功率列表"].has_key(item) == False:
-                res_dict[class_no][u"商品项及注册成功率列表"][item] = predict_res[i][1]
-            else:
-                res_dict[class_no][u"商品项及注册成功率列表"][item] = min(predict_res[i][1], res_dict[class_no][u"商品项及注册成功率列表"][item])
+                res_dict[class_no][u"商品项及注册成功率列表"][item] = [predict_res[i][1], his_name]
+            elif res_dict[class_no][u"商品项及注册成功率列表"][item][0] > predict_res[i][1]:
+                res_dict[class_no][u"商品项及注册成功率列表"][item] = [predict_res[i][1], his_name]
 
     for class_no in class_no_set:
         for item in res_dict[class_no][u"商品项及注册成功率列表"].keys():
-            res_dict[class_no][u"商品项及注册成功率列表"][item] = str(res_dict[class_no][u"商品项及注册成功率列表"][item]) + "%"
+            res_dict[class_no][u"商品项及注册成功率列表"][item] = str(res_dict[class_no][u"商品项及注册成功率列表"][item][0]) + "%   " \
+                                                                            "" + res_dict[class_no][u"商品项及注册成功率列表"][item][1]
     return res_dict
 
 def save_input_file(input_lines, input_file_name):

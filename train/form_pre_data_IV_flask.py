@@ -5,10 +5,10 @@ import redis
 import os
 from pypinyin import lazy_pinyin
 from itertools import combinations
-import time
+import time,datetime
 import trans_pre_data
 from processdata.database import db_session
-from similarity.brand import getCharacteristics, glyphApproximation, get_china_str
+from similarity import brand
 from processdata.brand_item import BrandItem
 import csv
 import time
@@ -48,14 +48,15 @@ item_dict = load_brand_item()
 ###redis数据库
 def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass = True, AllRes = True):
     brand_name = input_json["name"]
-    brand_name_china = get_china_str(brand_name)
+    brand_name_china = brand.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china)
     print "pinyin = %s"%(brand_name_pinyin)
     print AllClass, AllRes
     if AllClass == False:
-        class_no_set = range(1,46)#input_json["class"]
+        class_no_set = input_json["class"]
     else:
         class_no_set = range(1,46)
+    reload(brand)
     print "brand name is %s, with searching class: %s"%(brand_name,str(class_no_set))
 
     # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）， 包含被包含（越大越近）
@@ -103,16 +104,22 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
             for i in range(len(compare_list)):
                 compare_unit = record_id_dict[compare_list[i]]
                 his_name = compare_unit["name"].decode("utf-8")
+                his_name_pinyin = compare_unit["py"]
                 brand_no_his = compare_unit["no"]
                 last_class[class_no] = compare_unit
-                if judge_pinyin(brand_name, his_name) == False:
-                    if glyphApproximation(brand_name, his_name) < 0.9:
+                #start_time_s = datetime.datetime.now()
+                if judge_pinyin(brand_name_pinyin, his_name_pinyin) == False:
+                    if brand.glyphApproximation(brand_name, his_name) < 0.9:
                         continue
-                #计算相似度
-                #print "brand %s, his%s, class %d"%(brand_name, his_name, class_no)
+                #end_time_s = datetime.datetime.now()
+                #cost_time_s = (end_time_s - start_time_s).microseconds
+                #print "两商标计算拼音重合量的时间消耗为：", cost_time_s  #通常在1.5ms
+
+                #start_time_c = datetime.datetime.now()
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
-                #print his_name, brand_no_his
-                #print compare_Res
+                #end_time_c = datetime.datetime.now()
+                #cost_time_c = (end_time_c - start_time_c).microseconds
+                #print "两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 if similar == True:
                     similar_cnt[class_no] += 1 ###构造返回结果：近似商标名（及特征）
                     if (AllRes == True):
@@ -131,25 +138,28 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
         print traceback.format_exc()
 
     ###没有相似商标的情况
-    for class_no in class_no_set:
-        if similar_cnt[class_no] == 0:
-            compare_unit = last_class[class_no]
-            if compare_unit == None:
-                continue
-            similar_cnt[class_no] += 1
-            his_name = compare_unit["name"].decode("utf-8")
-            brand_no_his = compare_unit["no"]
-            compare_Res = getCharacteristics(brand_name, his_name)###构造返回结果：近似商标名（及特征）
-            if AllRes == True:
-                out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his,
-                           class_no]
-                out_row.extend(compare_Res)
-                out_row.extend([compare_unit["status"]])
-                out_row.extend('0')
-                return_list.append(out_row)
-            else:
-                out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his, class_no, False]
-                return_list.append(out_row)
+    try:
+        for class_no in class_no_set:
+            if similar_cnt[class_no] == 0:
+                compare_unit = last_class[class_no]
+                if compare_unit == None:
+                    continue
+                similar_cnt[class_no] += 1
+                his_name = compare_unit["name"].decode("utf-8")
+                brand_no_his = compare_unit["no"]
+                compare_Res = brand.getCharacteristics(brand_name, his_name)###构造返回结果：近似商标名（及特征）
+                if AllRes == True:
+                    out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his,
+                               class_no]
+                    out_row.extend(compare_Res)
+                    out_row.extend([compare_unit["status"]])
+                    out_row.extend('0')
+                    return_list.append(out_row)
+                else:
+                    out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his, class_no, False]
+                    return_list.append(out_row)
+    except:
+        print traceback.format_exc()
     #print "reload!!"
 
     if AllRes == True:
@@ -208,7 +218,7 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     h_list = his_name_pinyin
     h_vis = form_vis_list(h_list)
     maxl = max(len(b_list), len(h_list))
-    if maxl > len(b_list) * 3:
+    if maxl > len(b_list) * 2 + 1:
         return  False
 
     cnt_comm = 0
@@ -257,7 +267,7 @@ def getHistoryBrand(record_key_prefix, db, class_no_set):
         print "prepare key %s"%(record_key_prefix + str(class_no))
         for record_key in record_key_time_set:
             brand_name, brand_no, brand_status = record_key.split("&*(")
-            brand_china = get_china_str(brand_name)
+            brand_china = brand.get_china_str(brand_name)
             brand_pinyin = lazy_pinyin(brand_china)
             record_id_dict[cnt_id] = {
                                         "name":brand_name,
@@ -282,7 +292,7 @@ def getHistoryBrand(record_key_prefix, db, class_no_set):
     return record_id_dict , record_key_dict
 
 def compute_similar(brand_name, his_name, gate):
-    compare_Res = getCharacteristics(brand_name, his_name)
+    compare_Res = brand.getCharacteristics(brand_name, his_name)
     similar = False
     for index in range(len(compare_Res)):
         if gate[index] == 'C':

@@ -64,7 +64,8 @@ def train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict):
 
     ratio = task_dict["ratio"]
     print "ratio = %f , 0 has %d, 1 has %d "%(ratio,len(input_lines["0"]),len(input_lines["1"]))
-    train_size = int(ratio * min(len(input_lines["0"]), len(input_lines["1"])))
+    min_size = min(len(input_lines["0"]), len(input_lines["1"]))
+    train_size = int(ratio * min_size)
     print "train_size = %d"%(train_size)
 
     seed = 10
@@ -75,8 +76,8 @@ def train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict):
     train_lines = input_lines["0"][:train_size]
     train_lines.extend(input_lines["1"][:train_size])
 
-    test_lines = input_lines["0"][train_size:]
-    test_lines.extend(input_lines["1"][train_size:])
+    test_lines = input_lines["0"][train_size:min_size]
+    test_lines.extend(input_lines["1"][train_size:min_size])
 
     seed = 1
     np.random.seed(seed)
