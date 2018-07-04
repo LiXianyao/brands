@@ -130,7 +130,7 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
     # error = sum( int(y != (y_hat > 0.5)))
     error_rate = float(error) / len(y_hat)
 
-    f_record = open("testRes/Model_" + model_id + ".record","w")
+    f_record = open("testRes/Model_" + model_name + ".record","w")
     f_record.write("模型名：%s"%model_name)
     f_record.write("测试文件名: %s"%input_test_file_name)
     print '验证样本总数：\t', len(y_hat)
@@ -181,8 +181,8 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
             error_false = float(cnt_false_list[i])/cnt_list[i]
         else:
             error_false = 0.0
-        print "预测可信度大于%.1f的短信条数共有%d条，其中%d条是错误的，错误率%.2f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false)
-        f_record.write("预测可信度大于%f的短信条数共有%d条，其中%d条是错误的，错误率%f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false))
+        print "预测可信度大于%.1f的商标条数共有%d条，其中%d条是错误的，错误率%.2f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false)
+        f_record.write("预测可信度大于%f的商标条数共有%d条，其中%d条是错误的，错误率%f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false))
         statistics_row.extend([cnt_list[i], cnt_rate, cnt_false_list[i], error_false])
     writer.writerow(statistics_row)
     f_out.close()
@@ -191,29 +191,29 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
 
 
 """
-用途是读 构造好了的输入文件 ，然后预测输出csv
-重点是上面这个，构造好了的输入文件，是经由csvHandling.py运行后产生的，并且和调用这个函数时用的模型的 模型词典 相同，才能使用
-它存在的意义是为了不用反复跑csvHandling.py
-因为本身可以用同一组输入文件跑出很多个不同参数的模型，每次测的时候都从csvHandlling.py跑太慢了，输入文件是一样的（模型词典不变的情况下）
+训练模型
+1、读取目录下的训练集和验证集保存在的文件
+2、使用参数进行训练
+3、保存模型\参数配置
+4、使用模型对验证集的数据进行预测
+5、预测结果输出到csv文件
 """
-def test_model(data_file_name, data_context_file_name, model_name, test_statistics):
-    # 加载模型
-    model_name = model_name.split("/")[-1]
-    taskId = model_name.split("_")[0]
-    model_id = model_name.split(".")[0]
-    data_file_id = data_file_name.split("/")[-1].split("_")[0]
+def test_model( taskId, model_name):
+    input_test_file_name = taskId + "_test"
 
-    bst = xgb.Booster()
-    bst.load_model("models/" + model_name)
-
-    data_test = xgb.DMatrix(data_file_name)
-    f_test = open(data_context_file_name)
+    """验证集"""
+    data_test = xgb.DMatrix('data/input/' + input_test_file_name)
+    f_test = open('data/input/' + input_test_file_name + "_content")
     data_test_context = f_test.readlines()
-    print len(data_test_context)
-    print("test file size is: ", data_test.num_col(), data_test.num_row())
-    # print( type(data_train))
 
-    """预测
+    print("test file size is: ", data_test.num_col(), data_test.num_row())
+
+    """保存模型"""
+    bst = xgb.Booster()
+    bst.load_model(model_name)
+
+
+    """用验证集进行预测
     y_hat是预测结果矩阵，每行有标签数个小数，和为1.0
     y是训练数据里写的，原标签的号数（0开始）
     """
@@ -224,50 +224,57 @@ def test_model(data_file_name, data_context_file_name, model_name, test_statisti
     end_time_s = datetime.datetime.now()
     cost_time_s = (end_time_s - start_time_s).microseconds
     y = data_test.get_label()
-    test_size = data_test.num_row()
 
-    #csv_name = "testRes/OfflineRisk_res_model_" + model_id +"_"+ data_file_id  +".csv"
-    #f_out = open(csv_name, "w")
-    #writer = csv.writer(f_out)
-    title = [u"离线风险名称", u"离线风险匹配度",u"原标签",u"分类与原标签是否匹配", u"短文本内容"]
+    csv_name = taskId + "_test_result.csv"
+    f_out = open('testRes/' + csv_name,"w")
+    writer = csv.writer(f_out)
+    title = [u"预测分类",u"预测概率",u"原标签",u"分类与原标签是否匹配",u"输入商标名称", u"历史商标名称", u"所属小项"]
     for i in range(len(title)):
         title[i] = title[i].encode("gbk")
-    #writer.writerow(title)
+    writer.writerow(title)
+
+    test_size = data_test.num_row()
     error = 0
-    pro_list = [90.0, 80.0, 70.0, 50.0, 30.0, 0.0]
-    cnt_list = [0,0,0,0,0,0]
-    cnt_false_list = [0, 0, 0, 0, 0, 0]
+    pro_list = [90.0, 80.0, 70.0, 60.0, 50.0]
+    cnt_list = [0, 0, 0, 0, 0]
+    cnt_false_list = [0, 0, 0, 0, 0]
+    TP, TN, FP =  [0,0], [0,0], [0,0]
     for i in range(test_size):
-        temp = dict(zip(range(label_num), y_hat[i]))
+        temp = dict(zip(range(2), y_hat[i]))
         temp = sorted(temp.iteritems(), key=lambda d: d[1], reverse=True)
-        # if i < 20:
+        #if i < 20:
         #   print "y[i]=",int(y[i]),temp
         res = '1'
         out_row = []
-        prob = round(temp[0][1] * 100.0, 4)
-        out_row.append(offline_risk_label_name[temp[0][0]].encode("gbk"))
-        out_row.append(prob)
-        addcnt(prob, pro_list, cnt_list)
+        out_row.extend([temp[0][0], round(temp[0][1] * 100.0, 2)])  ##u"预测分类",u"预测概率"
         if i < 0:
             print data_test_context[i]
-            print "i", i, "predict = ", offline_risk_label_name[temp[0][0]], temp[0][1], offline_risk_label_name[temp[1][0]], \
-                temp[1][1], offline_risk_label_name[temp[2][0]], temp[2][1]
+            print "i", i, "predict = ", temp[0][0], round(temp[0][1] * 100.0, 2)
+        addcnt(round(temp[0][1] * 100.0, 2), pro_list, cnt_list) ##总体概率分布计数
         if int(y[i]) != temp[0][0]:
-            addcnt(prob, pro_list, cnt_false_list)
+            addcnt(round(temp[0][1] * 100.0, 2), pro_list, cnt_false_list) ###错误概率分布计数
             error += 1
             res = '0'
-        out_row.append(offline_risk_label_name[int(y[i])].encode("gbk"))
-        out_row.append(res)
-        content = data_test_context[i].split("&*()")[1].decode("utf-8").encode("gbk")  # 剥掉行序号
-        out_row.append(content)
-        #writer.writerow(out_row)
-    #f_out.close()
+            TN[temp[0][0]] += 1 ##被分类为y但是其实不是y的数量
+            FP[int(y[i])] += 1 ##实际是y但是没有被分为y的数量
+        else: ##实际分类与预测一致
+            TP[int(y[i])] += 1
+        out_row.extend([int(y[i]), res])
+        this_name = data_test_context[i].split("&*(")[0]
+        his_name = data_test_context[i].split("&*(")[1]
+        product_no = data_test_context[i].split("&*(")[-1]
+        out_row.extend([this_name, his_name, product_no])
+        writer.writerow(out_row)
+
+    f_out.close()
+    f_test.close()
+    # error = sum( int(y != (y_hat > 0.5)))
     error_rate = float(error) / len(y_hat)
 
-
-    f_record = open("testRes/Offline_m" + model_id + "_d" + data_file_id  + ".record","w")
+    model_name = model_name.split("/")[-1].split(".")[0]
+    f_record = open("testRes/test_" + model_name + "_with_data_" + taskId +  ".record","w")
     f_record.write("模型名：%s"%model_name)
-    f_record.write("测试文件名")
+    f_record.write("测试文件名: %s"%input_test_file_name)
     print '验证样本总数：\t', len(y_hat)
     f_record.write('验证样本总数：\t' + str(len(y_hat)) + "\n")
     print '错误条数：\t%4d' % error
@@ -276,28 +283,14 @@ def test_model(data_file_name, data_context_file_name, model_name, test_statisti
     f_record.write('错误率：\t%.5f%%' % (100 * error_rate)+ "\n")
     print "start at %s, end at %s" % (nowtime, endtime)
     f_record.write("start at %s, end at %s" % (nowtime, endtime))
-
-    #####输出各种指标到csv文件
-    csv_name = test_statistics
-    title = []
-    if os.path.exists(csv_name) == False:
-        ###文件不存在，则把表头写一下
-        title = [u"taskId", u"model_id", u"data_file_id",
-                 u"total_example", u"error_cnt", u"error_rate", u"start_time", u"end_time", u"cost_time_s",
-                 u"pro>=90_cnt", u"pro>=90_cnt_rate", u"pro>=90_error", u"pro>=90_error_rate",
-                 u"pro>=80_cnt", u"pro>=80_cnt_rate", u"pro>=80_error", u"pro>=80_error_rate",
-                 u"pro>=70_cnt", u"pro>=70_cnt_rate", u"pro>=70_error", u"pro>=70_error_rate",
-                 u"pro>=50_cnt", u"pro>=50_cnt_rate", u"pro>=50_error", u"pro>=50_error_rate",
-                 u"pro>=30_cnt", u"pro>=30_cnt_rate", u"pro>=30_error", u"pro>=30_error_rate",
-                 u"pro>=0_cnt", u"pro>=0_cnt_rate", u"pro>=0_error", u"pro>=0_error_rate"]
-        for i in range(len(title)):
-            title[i] = title[i].encode("gbk")
-    f_out = open(csv_name, "a")
-    writer = csv.writer(f_out)
-    if len(title) != 0:
-        writer.writerow(title)
-    statistics_row = [str(taskId), model_id, data_file_id,
-                      len(y_hat), error, error_rate, start_time_s, end_time_s, cost_time_s]
+    print "类别1的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
+          (TP[1], TN[1], FP[1], float(TP[1])/(TP[1] + TN[1]), float(TP[1])/(TP[1] + FP[1]))
+    f_record.write("类别1的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
+          (TP[1], TN[1], FP[1], float(TP[1])/(TP[1] + TN[1]), float(TP[1])/(TP[1] + FP[1])))
+    print "类别0的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
+          (TP[0], TN[0], FP[0], float(TP[0]) / (TP[0] + TN[0]), float(TP[0]) / (TP[0] + FP[0]))
+    f_record.write("类别0的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
+                   (TP[0], TN[0], FP[0], float(TP[0]) / (TP[0] + TN[0]), float(TP[0]) / (TP[0] + FP[0])))
 
     for i in range(len(pro_list)):
         if i>0:
@@ -308,96 +301,10 @@ def test_model(data_file_name, data_context_file_name, model_name, test_statisti
             error_false = float(cnt_false_list[i])/cnt_list[i]
         else:
             error_false = 0.0
-        print "预测可信度大于%.1f的短信条数共有%d条，其中%d条是错误的，错误率%.2f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false)
-        f_record.write("预测可信度大于%f的短信条数共有%d条，其中%d条是错误的，错误率%f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false))
-        statistics_row.extend([cnt_list[i], cnt_rate, cnt_false_list[i], error_false])
-    writer.writerow(statistics_row)
-    f_out.close()
+        print "预测可信度大于%.1f的商标条数共有%d条，其中%d条是错误的，错误率%.2f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false)
+        f_record.write("预测可信度大于%f的商标条数共有%d条，其中%d条是错误的，错误率%f\n" % (pro_list[i],cnt_list[i],cnt_false_list[i],error_false))
 
-
-    return model_name#, csv_name
-
-def test_model_rate(data_file_name, data_context_file_name, model_name, test_statistics):
-    # 加载模型
-    model_name = model_name.split("/")[-1]
-    taskId = model_name.split("_")[0]
-    model_id = model_name.split(".")[0]
-    data_file_id = data_file_name.split("/")[-1].split("_")[0]
-
-    get_label_code(taskId)
-    bst = xgb.Booster()
-    bst.load_model("models/" + model_name)
-
-    data_test = xgb.DMatrix(data_file_name)
-    print("test file size is: ", data_test.num_col(), data_test.num_row())
-    # print( type(data_train))
-
-    """预测
-    y_hat是预测结果矩阵，每行有标签数个小数，和为1.0
-    y是训练数据里写的，原标签的号数（0开始）
-    """
-    nowtime = time.strftime("%Y%m%d%H%M%S", time.localtime())
-    start_time_s = datetime.datetime.now()
-    y_hat = bst.predict(data_test)
-    endtime = time.strftime("%Y%m%d%H%M%S", time.localtime())
-    end_time_s = datetime.datetime.now()
-    cost_time_s = (end_time_s - start_time_s).microseconds
-    y = data_test.get_label()
-    test_size = data_test.num_row()
-
-    cnt_class_Suc = {}
-    cnt_true_class = {}
-    cnt_true_class_hit = {}
-    for i in range(label_num):
-        cnt_true_class_hit[i] = 0
-        cnt_class_Suc[i] = 0
-        cnt_true_class[i] = 0
-
-    j = 0
-    for i in range(test_size):
-        temp = dict(zip(range(label_num), y_hat[i]))
-        temp = sorted(temp.iteritems(), key=lambda d: d[1], reverse=True)
-        cnt_class_Suc[temp[0][0]] += 1
-
-        if int(temp[0][0]) == int(y[i]):
-            cnt_true_class_hit[int(y[i])] += 1
-
-        cnt_true_class[int(y[i])] += 1
-
-    print cnt_class_Suc
-    print cnt_true_class
-
-    #####输出各种指标到csv文件
-    csv_name = test_statistics
-    title = []
-    if os.path.exists(csv_name) == False:
-        ###文件不存在，则把表头写一下
-        title = [u"标签名", u"分类正确", u"结果为C", u"实际为C", u"Recall", u"Currency"]
-        for i in range(len(title)):
-            title[i] = title[i].encode("gbk")
-    f_out = open(csv_name, "w")
-    writer = csv.writer(f_out)
-    if len(title) != 0:
-        writer.writerow(title)
-
-    for i in range(label_num):
-        label_name = offline_risk_label_name[i]
-        a = cnt_true_class_hit[i]
-        ab = cnt_class_Suc[i]
-        ac = cnt_true_class[i]
-        recall = 0
-        currency = 0
-        print label_name, a, ab, ac
-        if ac > 0:
-            recall = round(float(a) / ac * 100, 2)
-        if ab > 0:
-            currency = round(float(a) / ab* 100, 2)
-        outrow = [label_name.encode("gbk"), a, ab, ac, recall, currency]
-        writer.writerow(outrow)
-    f_out.close()
-
-
-    return model_name#, csv_name
+    return model_name, csv_name
 
 def addcnt(prob, prob_list, cnt_list):
     for i in range(len(prob_list)):
@@ -471,9 +378,4 @@ if __name__ == "__main__":
         train_model(str(action_parameters_dict['time_stamp']), boost_parameters_dict, train_parameters_dict, statistics_files_dict['train_statistics'],model_id=str(action_parameters_dict['model_id']))
     elif action == 'test':
         print "now test:"
-        test_model(action_parameters_dict['data_file_name'], action_parameters_dict['data_context_file_name'],
-                   action_parameters_dict['model_name'], statistics_files_dict['test_statistics'])
-    elif action == 'cnt_test':
-        print "now cnt_test:"
-        test_model_rate(action_parameters_dict['data_file_name'], action_parameters_dict['data_context_file_name'],
-                        action_parameters_dict['model_name'], statistics_files_dict['test_statistics'])
+        test_model(str(action_parameters_dict['test_data_id']), str(action_parameters_dict['test_model']))
