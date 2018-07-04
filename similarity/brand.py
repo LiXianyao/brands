@@ -74,6 +74,19 @@ def split_not_china(_str):
 
     return num_str, eng_str, eng_str_2
 
+#获得商标名中的英文（列表形式）
+def get_not_china_list(_str):
+    split_list = re.findall(u"[a-zA-Z][a-z]+|[A-Z][A-Z]*|[0-9]+", _str)
+    num_list = []
+    eng_list = []
+    for str_i in split_list:
+        if isNum(str_i):
+            num_list.append(str_i)
+        else:
+            str_i = str_i.lower()
+            eng_list.append(str_i)
+
+    return num_list, eng_list
 
 
 
@@ -114,7 +127,7 @@ def inclusion(_str1,_str2):
                     # 记录最大匹配长度的终止位置
                     p = i + 1
 
-    return maxNum/len(_str1)
+    return maxNum/max(len(_str1),len(_str2))
 
 # 英文 文字包含或被包含关系
 def inclusion_Eng(_str1,_str2):
@@ -144,7 +157,7 @@ def inclusion_Eng(_str1,_str2):
                     # 记录最大匹配长度的终止位置
                     p = i + 1
 
-    return maxNum / len(list1)
+    return maxNum / max(lstr1,lstr2)
 
 # 中 文字排列组合方式
 def combination(_str1,_str2):
@@ -161,7 +174,7 @@ def combination(_str1,_str2):
                 continue
             ans += 1
             vis_list2[i_2] = True
-    return ans/len(list1)
+    return ans/max(len(list1),len(list2))
 
 # 英文 文字排列组合方式
 def combination_Eng(_str1,_str2):
@@ -181,7 +194,7 @@ def combination_Eng(_str1,_str2):
                 continue
             ans += 1
             vis_list2[i_2] = True
-    return ans/len(list1)
+    return ans/max(len(list1),len(list2))
 
 
 # 中文拼音编辑距离

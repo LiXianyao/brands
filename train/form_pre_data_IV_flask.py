@@ -50,7 +50,9 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     brand_name = input_json["name"]
     brand_name_china = brand.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china)
-    print "pinyin = %s"%(brand_name_pinyin)
+    brand_name_num , brand_name_eng = brand.get_not_china_list(brand_name)
+    brand_name_pinyin.extend(brand_name_eng)
+    print "pinyin plus eng = %s"%(brand_name_pinyin)
     print AllClass, AllRes
     if AllClass == False:
         class_no_set = input_json["class"]
@@ -63,7 +65,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C','C','C','C', 0.9, 0.8, 0.8, 'C', 'C',1.0]
+    gate = ['C','C','C','C', 'N', 0.8, 0.8, 'C', 'C',1.0]
 
     session = db_session()
     similar_cnt = {k:v for k,v in zip(class_no_set, [0]*len(class_no_set))}
@@ -78,6 +80,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
             compare_list = record_time_dict[class_no]
             ###确定都有哪些拼音在大类中有
             exsit_py = set(brand_name_pinyin).intersection(compare_list.keys())
+            print brand_name_pinyin, exsit_py
             #print exsit_py, brand_name_pinyin
             py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
             #print u"共有拼音集合：%s, 下限长度 = %d"%(str(exsit_py), py_low)
@@ -218,7 +221,7 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     h_list = his_name_pinyin
     h_vis = form_vis_list(h_list)
     maxl = max(len(b_list), len(h_list))
-    if maxl > len(b_list) * 2 + 1:
+    if maxl > min(len(b_list) * 2 + 1, len(b_list) + 2):
         return  False
 
     cnt_comm = 0
@@ -267,8 +270,13 @@ def getHistoryBrand(record_key_prefix, db, class_no_set):
         print "prepare key %s"%(record_key_prefix + str(class_no))
         for record_key in record_key_time_set:
             brand_name, brand_no, brand_status = record_key.split("&*(")
+
+            ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
             brand_china = brand.get_china_str(brand_name)
             brand_pinyin = lazy_pinyin(brand_china)
+            brand_num, brand_eng = brand.get_not_china_list(brand_name)
+            brand_pinyin.extend(brand_eng)
+
             record_id_dict[cnt_id] = {
                                         "name":brand_name,
                                         "no":brand_no,
@@ -279,11 +287,10 @@ def getHistoryBrand(record_key_prefix, db, class_no_set):
             try:
                 record_key_dict[class_no]
             except:
-                record_key_dict[class_no] = {"ENG":set()}
+                record_key_dict[class_no] = {}
 
             if len(brand_pinyin)==0:
                 continue
-                record_key_dict[class_no]["ENG"].add(cnt_id)
             for pinyin in brand_pinyin:
                 if record_key_dict[class_no].has_key(pinyin) == False:
                     record_key_dict[class_no][pinyin] = set()

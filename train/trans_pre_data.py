@@ -35,11 +35,14 @@ def trans_Data(taskId, data_list, item_list, class_no_set):
         input_lines.append(input_line)
 
     save_input_file(input_lines,"data/" + input_file_name)
-    ###调用模型计算得到每个商标的通过率
-    reload(classify_xgboost_prediction)
-    predict_res = classify_xgboost_prediction.request_from_web("data/" + input_file_name)
-    #print data_list, predict_res
-    os.system("rm " + "data/" + input_file_name)
+    if len(input_lines) > 0:
+        ###调用模型计算得到每个商标的通过率
+        reload(classify_xgboost_prediction)
+        predict_res = classify_xgboost_prediction.request_from_web("data/" + input_file_name)
+        #print data_list, predict_res
+        os.system("rm " + "data/" + input_file_name)
+    else:
+        predict_res = []
     ###统计计算每个大类的通过率
     return compute_class_through_rate(data_list, item_list, predict_res, class_no_set)
 

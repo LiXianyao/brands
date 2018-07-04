@@ -79,6 +79,6 @@ def load_config_file(configFile):
     return action_parameters_dict
 
 def request_from_web(input_file_name):
-    configFile = "predict_models.config"
+    configFile = "../train/predict_models.config"
     action_parameters_dict= load_config_file(configFile)  # 读取训练配置文件
     return test_model(action_parameters_dict, input_file_name)

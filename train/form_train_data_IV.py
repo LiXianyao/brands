@@ -20,7 +20,7 @@ from processdata.database import db_session
 from processdata.brand_record_group import BrandRecord
 from processdata.brand_item import BrandItem
 from sqlalchemy import text
-from similarity.brand import getCharacteristics, glyphApproximation, get_china_str
+from similarity.brand import getCharacteristics, glyphApproximation, get_china_str, get_not_china_list
 import csv
 import time
 import json
@@ -97,7 +97,7 @@ def analysis_product_list(line):
 ###redis数据库
 def form_train_data_redis(lowb, num):
     row_len = 9
-    file_names = range(3, 6)##其实就是从a.csv到b.csv里面获取数据
+    file_names = range(7, 14)##其实就是从a.csv到b.csv里面获取数据
 
     item_dict = load_brand_item()
     db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=default_pwd)
@@ -108,13 +108,13 @@ def form_train_data_redis(lowb, num):
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C','C','C','C', 'N', 0.8, 0.8, 'C', 'C',1.0]
+    gate = ['C','C','C','C', 'N', 0.85, 0.8, 'C', 'C',1.0]
     record_key = "rd::"
     record_key_time = "rdt::"
     rset_key_prefix = "rset::"
     detail_key_prefix = "dtl::"
 
-    csv_name = u"data/origin/train_7_4_2.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
+    csv_name = u"data/origin/train_7_4_4.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
     title = []
     if os.path.exists(csv_name) == False:
         ###文件不存在，则把表头写一下
@@ -172,6 +172,8 @@ def form_train_data_redis(lowb, num):
                         continue
                     brand_name_china = get_china_str(brand_name)
                     brand_name_pinyin = lazy_pinyin(brand_name_china)
+                    brand_name_num, brand_name_eng = brand.get_not_china_list(brand_name)
+                    brand_name_pinyin.extend(brand_name_eng)
 
                     ###数据行可用，开始逐个小项进行处理
                     #e_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
@@ -279,7 +281,7 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     h_list = his_name_pinyin
     h_vis = form_vis_list(h_list)
     maxl = max(len(b_list), len(h_list))
-    if maxl > len(b_list) * 2 + 1:
+    if maxl > min(len(b_list) * 2 + 1, len(b_list) + 2):
         return False
 
     cnt_comm = 0
@@ -316,8 +318,11 @@ def getHistoryBrandWithTime(record_key_prefix, db):
         record_key_time_set = db.smembers(record_key_prefix + str(class_no))
         for record_key in record_key_time_set:
             brand_name, brand_no, apply_time, brand_status = record_key.split("&*(")
+            ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
             brand_china = get_china_str(brand_name)
             brand_pinyin = lazy_pinyin(brand_china)
+            brand_num, brand_eng = get_not_china_list(brand_name)
+            brand_pinyin.extend(brand_eng)
             record_id_dict[cnt_id] = {
                                         "name":brand_name,
                                         "no":brand_no,
@@ -332,11 +337,10 @@ def getHistoryBrandWithTime(record_key_prefix, db):
             try:
                 record_key_time_dict[apply_time][class_no]
             except:
-                record_key_time_dict[apply_time][class_no] = {"ENG":set()}
+                record_key_time_dict[apply_time][class_no] = {}
 
             if len(brand_pinyin)==0:
                 continue
-                record_key_time_dict[apply_time][class_no]["ENG"].add(cnt_id)
             for pinyin in brand_pinyin:
                 if record_key_time_dict[apply_time][class_no].has_key(pinyin) == False:
                     record_key_time_dict[apply_time][class_no][pinyin] = set()
@@ -350,7 +354,7 @@ def compute_similar(brand_name, his_name, gate):
     similar = False
     for index in range(len(compare_Res)):
         if gate[index] == 'C':
-            if len(brand_name) < 4 and compare_Res[index] >= 0.65:
+            if len(brand_name) < 4 and compare_Res[index] >= 0.76:
                 similar = True
             elif len(brand_name) >= 4 and compare_Res[index] >= 0.76:
                 similar = True
@@ -388,7 +392,7 @@ if __name__=="__main__":
     try:
         lowb, num = int(sys.argv[1]), int(sys.argv[2])
     except:
-        lowb , num = 0, 10000
+        lowb , num = 0, 20000
     form_train_data_redis(lowb, num)
     #load_brand_item()
 
