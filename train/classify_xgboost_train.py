@@ -27,7 +27,13 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
     input_test_file_name = taskId + "_test"
 
     """读取训练集和验证集"""
-    data_train = xgb.DMatrix('data/input/' + input_train_file_name)
+    try:
+        data_train = xgb.DMatrix('data/input/' + input_train_file_name)
+    except:
+        taskId = '0' + taskId
+        input_train_file_name = taskId + "_train"
+        input_test_file_name = taskId + "_test"
+        data_train = xgb.DMatrix('data/input/' + input_train_file_name)
     data_test = xgb.DMatrix('data/input/' + input_test_file_name)
     f_test = open('data/input/' + input_test_file_name + "_content")
     data_test_context = f_test.readlines()
@@ -81,7 +87,7 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
     y_hat = bst.predict(data_test)
     endtime = time.strftime("%Y%m%d%H%M%S", time.localtime())
     end_time_s = datetime.datetime.now()
-    cost_time_s = (end_time_s - start_time_s).microseconds
+    cost_time_s = (end_time_s - start_time_s).total_seconds()
     y = data_test.get_label()
 
     csv_name = taskId + "_test_result.csv"
@@ -222,7 +228,7 @@ def test_model( taskId, model_name):
     y_hat = bst.predict(data_test)
     endtime = time.strftime("%Y%m%d%H%M%S", time.localtime())
     end_time_s = datetime.datetime.now()
-    cost_time_s = (end_time_s - start_time_s).microseconds
+    cost_time_s = (end_time_s - start_time_s).total_seconds()
     y = data_test.get_label()
 
     csv_name = taskId + "_test_result.csv"

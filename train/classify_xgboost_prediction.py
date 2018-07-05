@@ -23,13 +23,13 @@ label_num = 2
 def test_model(action_parameters_dict, input_file_name):
     # 加载模型
     model_name = action_parameters_dict["model_name"]
-    print model_name
+    #print model_name
 
     bst = xgb.Booster()
     bst.load_model("../train/models/" + model_name)
 
     data_test = xgb.DMatrix(input_file_name)
-    print("test file size is: ", data_test.num_col(), data_test.num_row())
+    #print("test file size is: ", data_test.num_col(), data_test.num_row())
     # print( type(data_train))
 
     """预测
@@ -39,7 +39,7 @@ def test_model(action_parameters_dict, input_file_name):
     start_time_s = datetime.datetime.now()
     y_hat = bst.predict(data_test)
     end_time_s = datetime.datetime.now()
-    cost_time_s = (end_time_s - start_time_s).microseconds
+    cost_time_s = (end_time_s - start_time_s).total_seconds()
     test_size = data_test.num_row()
     print "模型计算消耗时间:",cost_time_s
 

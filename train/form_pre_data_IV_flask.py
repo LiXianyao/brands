@@ -5,13 +5,10 @@ import redis
 import os
 from pypinyin import lazy_pinyin
 from itertools import combinations
-import time,datetime
+import datetime
 import trans_pre_data
-from processdata.database import db_session
 from similarity import brand
-from processdata.brand_item import BrandItem
 import csv
-import time
 import json
 import  traceback
 sys.path.append("..")
@@ -33,7 +30,8 @@ detail_key_prefix = "dtl::"
 
 ###获取商标的群组和小项名字、编号的映射关系
 def load_brand_item():
-    item_list = BrandItem.query.all()
+    from processdata import brand_item
+    item_list = brand_item.BrandItem.query.all()
     item_dict = {}
     for item in item_list:
         item_name = item.item_name
@@ -52,14 +50,14 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     brand_name_pinyin = lazy_pinyin(brand_name_china)
     brand_name_num , brand_name_eng = brand.get_not_china_list(brand_name)
     brand_name_pinyin.extend(brand_name_eng)
-    print "pinyin plus eng = %s"%(brand_name_pinyin)
-    print AllClass, AllRes
+    #print "pinyin plus eng = %s"%(brand_name_pinyin)
+    #print AllClass, AllRes
     if AllClass == False:
         class_no_set = input_json["class"]
     else:
         class_no_set = range(1,46)
     reload(brand)
-    print "brand name is %s, with searching class: %s"%(brand_name,str(class_no_set))
+    #print "brand name is %s, with searching class: %s"%(brand_name,str(class_no_set))
 
     # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）， 包含被包含（越大越近）
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
@@ -67,10 +65,10 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     # 数字完全匹配（越大越近）
     gate = ['C','C','C','C', 'N', 0.8, 0.8, 'C', 'C',1.0]
 
-    session = db_session()
     similar_cnt = {k:v for k,v in zip(class_no_set, [0]*len(class_no_set))}
     last_class = {k:v for k,v in zip(class_no_set, [None]*len(class_no_set))}
-    s_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
+    start_time_c = datetime.datetime.now()
+
     return_list = []
     try:
         for class_no in class_no_set:
@@ -80,7 +78,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
             compare_list = record_time_dict[class_no]
             ###确定都有哪些拼音在大类中有
             exsit_py = set(brand_name_pinyin).intersection(compare_list.keys())
-            print brand_name_pinyin, exsit_py
+            #print brand_name_pinyin, exsit_py
             #print exsit_py, brand_name_pinyin
             py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
             #print u"共有拼音集合：%s, 下限长度 = %d"%(str(exsit_py), py_low)
@@ -115,25 +113,25 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
                     if brand.glyphApproximation(brand_name, his_name) < 0.9:
                         continue
                 #end_time_s = datetime.datetime.now()
-                #cost_time_s = (end_time_s - start_time_s).microseconds
+                #cost_time_s = (end_time_s - start_time_s).total_seconds()
                 #print "两商标计算拼音重合量的时间消耗为：", cost_time_s  #通常在1.5ms
 
                 #start_time_c = datetime.datetime.now()
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
                 #end_time_c = datetime.datetime.now()
-                #cost_time_c = (end_time_c - start_time_c).microseconds
+                #cost_time_c = (end_time_c - start_time_c).total_seconds()
                 #print "两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 if similar == True:
                     similar_cnt[class_no] += 1 ###构造返回结果：近似商标名（及特征）
                     if (AllRes == True):
-                        out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his,
+                        out_row = [brand_name, his_name, brand_no_his,
                                    class_no]
                         out_row.extend(compare_Res)
                         out_row.extend([compare_unit["status"]])
                         out_row.extend('1')
                         return_list.append(out_row)
                     else:
-                        out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his, class_no, True]
+                        out_row = [brand_name, his_name, brand_no_his, class_no, True]
                         return_list.append(out_row)
             del compare_list
     except:
@@ -152,14 +150,14 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
                 brand_no_his = compare_unit["no"]
                 compare_Res = brand.getCharacteristics(brand_name, his_name)###构造返回结果：近似商标名（及特征）
                 if AllRes == True:
-                    out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his,
+                    out_row = [brand_name, his_name, brand_no_his,
                                class_no]
                     out_row.extend(compare_Res)
                     out_row.extend([compare_unit["status"]])
                     out_row.extend('0')
                     return_list.append(out_row)
                 else:
-                    out_row = [brand_name.encode("utf-8"), his_name.encode("utf-8"), brand_no_his, class_no, False]
+                    out_row = [brand_name, his_name, brand_no_his, class_no, False]
                     return_list.append(out_row)
     except:
         print traceback.format_exc()
@@ -181,8 +179,9 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
             print traceback.format_exc()
 
     ###调用预测模块添东西
-    e_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
-    print "start at %s, end at %s"%(s_time, e_time)
+    end_time_c = datetime.datetime.now()
+    cost_time_c = (end_time_c - start_time_c).total_seconds()
+    print "进程查询耗时为 :", cost_time_c
     return return_list
 
 ##根据给定的商标id和大类。获取这个商标在这个大类下的小项id
@@ -347,6 +346,7 @@ def createRedisConnection():
 ##975418个不同的商标，12277622
 if __name__=="__main__":
     #form_train_data()
+    """
     try:
         json_Str = sys.argv[1]
         print json_Str
@@ -378,6 +378,7 @@ if __name__=="__main__":
     for row in return_list:
         writer.writerow(row)
     f_out.close()
+    """
 
 
 

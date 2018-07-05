@@ -44,9 +44,9 @@ def train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict):
             his_brand_no = line[-16]
             this_name = line[0]
             his_name = ",".join(line[1:-16])
-            #if (this_name,his_name) in name_pair:
-            #    continue
-            #name_pair.add((this_name,his_name))
+            if (this_name,his_name) in name_pair:
+                continue
+            name_pair.add((this_name,his_name))
 
             input_line = this_status
             for i in range(len(attribute)):
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     """时间戳！！用于区分同一套模型/训练数据/测试数据"""
-    nowtime = time.strftime("%m%d%H%M", time.localtime())
+    nowtime = time.strftime("%Y%m%d%H%M", time.localtime())
     taskId = "default_train_" + nowtime
     configFile = "train.config"
 
