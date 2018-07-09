@@ -17,10 +17,8 @@ fixed_db = cf.get("redis","fixed_db")
 default_pwd = cf.get("redis","default_pwd")
 
 from processdata.database import db_session
-from processdata.brand_record_group import BrandRecord
 from processdata.brand_item import BrandItem
-from sqlalchemy import text
-from similarity.brand import getCharacteristics, glyphApproximation, get_china_str, get_not_china_list
+from similarity import brand
 import csv
 import time
 import json
@@ -97,7 +95,7 @@ def analysis_product_list(line):
 ###redis数据库
 def form_train_data_redis(lowb, num):
     row_len = 9
-    file_names = range(7, 14)##其实就是从a.csv到b.csv里面获取数据
+    file_names = range(1, 14)##其实就是从a.csv到b.csv里面获取数据
 
     item_dict = load_brand_item()
     db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=default_pwd)
@@ -108,13 +106,13 @@ def form_train_data_redis(lowb, num):
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C','C','C','C', 'N', 0.85, 0.8, 'C', 'C',1.0]
+    gate = ['C', 0.85, 'C', 'C', 'N', 0.9, 0.8, 'C', 'C',1.0]
     record_key = "rd::"
     record_key_time = "rdt::"
     rset_key_prefix = "rset::"
     detail_key_prefix = "dtl::"
 
-    csv_name = u"data/origin/train_7_4_4.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
+    csv_name = u"data/origin/train_7_6_1.csv"##训练数据保存出来的文件名（个人习惯按日期命名）
     title = []
     if os.path.exists(csv_name) == False:
         ###文件不存在，则把表头写一下
@@ -170,7 +168,7 @@ def form_train_data_redis(lowb, num):
                     brand_name = ','.join(line[3: product_list_head]).decode("utf-8")
                     if brand_name == u"图形":  #商标名是图形的其实是图形商标
                         continue
-                    brand_name_china = get_china_str(brand_name)
+                    brand_name_china = brand.get_china_str(brand_name)
                     brand_name_pinyin = lazy_pinyin(brand_name_china)
                     brand_name_num, brand_name_eng = brand.get_not_china_list(brand_name)
                     brand_name_pinyin.extend(brand_name_eng)
@@ -214,11 +212,13 @@ def form_train_data_redis(lowb, num):
                                     compare_unit = record_id_dict[compare_list[i]]
                                     his_name = compare_unit["name"].decode("utf-8")
                                     his_name_pinyin = compare_unit["py"]
+                                    his_name_china = compare_unit["ch"]
                                     brand_no_his = compare_unit["no"]
                                     last_class[class_no] = compare_unit
                                     if judge_pinyin(brand_name_pinyin, his_name_pinyin) == False:
-                                        #if glyphApproximation(brand_name, his_name) < 0.9:
-                                        continue
+                                        if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(
+                                                brand_name_china, his_name_china) < 0.9:
+                                            continue
                                     #计算相似度
                                     #print "brand %s, his%s, class %d"%(brand_name, his_name, class_no)
                                     similar, compare_Res = compute_similar(brand_name, his_name, gate)
@@ -243,7 +243,7 @@ def form_train_data_redis(lowb, num):
                             similar_cnt += 1
                             his_name = compare_unit["name"].decode("utf-8")
                             brand_no_his = compare_unit["no"]
-                            compare_Res = getCharacteristics(brand_name, his_name)
+                            compare_Res = brand.getCharacteristics(brand_name, his_name)
                             out_row = [brand_name.encode("gbk"), his_name.encode("gbk"), brand_no, brand_no_his,
                                        i18n_type]
                             out_row.extend(compare_Res)
@@ -275,27 +275,33 @@ def compute_py_lowb(brand_name_pinyin):
         # print b_list,h_list
         return max(int(len(b_list) * 0.76), 2)
 
-###判断两个商标中是否有同音
+###判断两个商标中是否有同音字
 def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     b_list = brand_name_pinyin
     h_list = his_name_pinyin
-    h_vis = form_vis_list(h_list)
-    maxl = max(len(b_list), len(h_list))
-    if maxl > min(len(b_list) * 2 + 1, len(b_list) + 2):
+
+    b_len = len(b_list)
+    h_len = len(h_list)
+
+    if h_len > len(b_list) + 2:  ##字数比较，被比较商标比原商标长2以上就pass
         return False
 
     cnt_comm = 0
-    for i in range(len(b_list)):
-        for j in range(len(h_list)):
-            if h_vis[j] == False and h_list[j] == b_list[i]:
-                cnt_comm += 1
-                h_vis[j] = True
-                break
+    if b_len <= 3: ##商标长度小于等于3时，按乱序查找。即只要h串里有就行（可能重音，要标记）
+        h_vis = form_vis_list(h_list)
+        for i in range(b_len):
+            for j in range(h_len):
+                if h_vis[j] == False and h_list[j] == b_list[i]:
+                    cnt_comm += 1
+                    h_vis[j] = True
+                    break
+    if b_len > 3:  ##商标长度大于等于3时，按正序查找（就是算最长匹配距离）
+        cnt_comm = brand.maxMatchLen(b_list, h_list)
 
-    if len(b_list) < 3 and cnt_comm == len(b_list):
+    if b_len < 3 and cnt_comm == len(b_list) and h_len < b_len + 2:
         # print b_list, h_list, cnt_comm
         return True
-    elif len(brand_name_pinyin) >= 3 and cnt_comm >= max(int(maxl * 0.76), 2):  #
+    elif b_len >= 3 and cnt_comm >= max(int(max(b_len, h_len) * 0.76), 2):  #
         # print b_list,h_list
         return True
 
@@ -308,26 +314,27 @@ def form_vis_list(a_list):
     return a_vis
 
 ###从redis中获取所有的历史商标构成的set(带时间戳的)
-def getHistoryBrandWithTime(record_key_prefix, db):
+def getHistoryBrandWithTime(record_key_prefix, db, class_no_set = range(1, 46)):
     record_key_time_dict = {}
     record_id_dict = {}
     cnt_id = 0
-    for class_no in range(1, 46):
+    for class_no in class_no_set:
         ##依次获取每个大类的
         print "prepare class %d"%class_no
         record_key_time_set = db.smembers(record_key_prefix + str(class_no))
         for record_key in record_key_time_set:
             brand_name, brand_no, apply_time, brand_status = record_key.split("&*(")
             ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
-            brand_china = get_china_str(brand_name)
+            brand_china = brand.get_china_str(brand_name)
             brand_pinyin = lazy_pinyin(brand_china)
-            brand_num, brand_eng = get_not_china_list(brand_name)
+            brand_num, brand_eng = brand.get_not_china_list(brand_name)
             brand_pinyin.extend(brand_eng)
             record_id_dict[cnt_id] = {
                                         "name":brand_name,
                                         "no":brand_no,
                                         "status":brand_status,
-                                        "py": brand_pinyin
+                                        "py": brand_pinyin,
+                                        "ch": brand_china
                                     }
             try:
                 record_key_time_dict[apply_time]
@@ -350,7 +357,7 @@ def getHistoryBrandWithTime(record_key_prefix, db):
 
 ####两个商标计算相似度，按gate阈值过滤
 def compute_similar(brand_name, his_name, gate):
-    compare_Res = getCharacteristics(brand_name, his_name)
+    compare_Res = brand.getCharacteristics(brand_name, his_name)
     similar = False
     for index in range(len(compare_Res)):
         if gate[index] == 'C':
@@ -392,7 +399,7 @@ if __name__=="__main__":
     try:
         lowb, num = int(sys.argv[1]), int(sys.argv[2])
     except:
-        lowb , num = 0, 20000
+        lowb , num = 0, 40000
     form_train_data_redis(lowb, num)
     #load_brand_item()
 

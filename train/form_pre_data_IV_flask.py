@@ -32,11 +32,13 @@ detail_key_prefix = "dtl::"
 def load_brand_item():
     from processdata import brand_item
     item_list = brand_item.BrandItem.query.all()
+    brand_item.db_session.rollback()
     item_dict = {}
     for item in item_list:
         item_name = item.item_name
         item_no = item.item_no
         item_dict[item_no] = item_name
+    del brand_item
     return item_dict
 
 ###小项id ->小项名的映射
@@ -106,11 +108,12 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
                 compare_unit = record_id_dict[compare_list[i]]
                 his_name = compare_unit["name"].decode("utf-8")
                 his_name_pinyin = compare_unit["py"]
+                his_name_china = compare_unit["ch"]
                 brand_no_his = compare_unit["no"]
                 last_class[class_no] = compare_unit
                 #start_time_s = datetime.datetime.now()
                 if judge_pinyin(brand_name_pinyin, his_name_pinyin) == False:
-                    if brand.glyphApproximation(brand_name, his_name) < 0.9:
+                    if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
                 #end_time_s = datetime.datetime.now()
                 #cost_time_s = (end_time_s - start_time_s).total_seconds()
@@ -214,28 +217,34 @@ def bind_title(return_list, AllRes):
             return_list[i] = dict(zip(title_only, return_list[i]))
     return return_list
 
-###判断两个商标中是否有同音
+###判断两个商标中是否有同音字
 def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     b_list = brand_name_pinyin
     h_list = his_name_pinyin
-    h_vis = form_vis_list(h_list)
-    maxl = max(len(b_list), len(h_list))
-    if maxl > min(len(b_list) * 2 + 1, len(b_list) + 2):
-        return  False
+
+    b_len = len(b_list)
+    h_len = len(h_list)
+
+    if h_len > len(b_list) + 2:  ##字数比较，被比较商标比原商标长2以上就pass
+        return False
 
     cnt_comm = 0
-    for i in range(len(b_list)):
-        for j in range(len(h_list)):
-            if h_vis[j] == False and h_list[j] == b_list[i]:
-                cnt_comm += 1
-                h_vis[j] = True
-                break
+    if b_len <= 3: ##商标长度小于等于3时，按乱序查找。即只要h串里有就行（可能重音，要标记）
+        h_vis = form_vis_list(h_list)
+        for i in range(b_len):
+            for j in range(h_len):
+                if h_vis[j] == False and h_list[j] == b_list[i]:
+                    cnt_comm += 1
+                    h_vis[j] = True
+                    break
+    if b_len > 3:  ##商标长度大于等于3时，按正序查找（就是算最长匹配距离）
+        cnt_comm = brand.maxMatchLen(b_list, h_list)
 
-    if len(b_list) < 3 and cnt_comm == len(b_list):
-        #print b_list, h_list, cnt_comm
+    if b_len < 3 and cnt_comm == len(b_list) and h_len < b_len + 2:
+        # print b_list, h_list, cnt_comm
         return True
-    elif len(brand_name_pinyin) >= 3 and cnt_comm >= max(int(maxl * 0.76), 2):#
-        #print b_list,h_list
+    elif b_len >= 3 and cnt_comm >= max(int(max(b_len, h_len) * 0.76), 2):  #
+        # print b_list,h_list
         return True
 
     return False
@@ -280,7 +289,8 @@ def getHistoryBrand(record_key_prefix, db, class_no_set):
                                         "name":brand_name,
                                         "no":brand_no,
                                         "status":brand_status,
-                                        "py": brand_pinyin
+                                        "py": brand_pinyin,
+                                        "ch": brand_china
                                     }
 
             try:

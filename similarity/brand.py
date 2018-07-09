@@ -39,7 +39,7 @@ def init_String(_str):
         if isChina(i):
             str_china = str_china + i
         else:
-            if i == u" " or i == u";" or i == u"":
+            if i == u" " or i == u"":
                 continue
             s_num_str, s_eng_str, s_eng_str_2 = split_not_china(i) ###非中文串，可能是单纯的数字或者字母串，也可能是混合串，拆一下
             str_char = str_char + s_eng_str
@@ -64,6 +64,7 @@ def split_not_china(_str):
     num_str = ""
     eng_str = ""
     eng_str_2 = ""
+    str_l = len(_str)
     for str_i in split_list:
         if isNum(str_i):
             num_str += str_i
@@ -109,6 +110,12 @@ def inclusion(_str1,_str2):
     if len(_str1) == 0 or len(_str2) == 0:
         return 0
 
+    maxNum = maxMatchLen(_str1, _str2)
+
+    return maxNum/max(len(_str1),len(_str2))
+
+###计算最大匹配长度
+def maxMatchLen(_str1, _str2):
     lstr1 = len(_str1)
     lstr2 = len(_str2)
     record = [[0 for i in range(lstr2 + 1)] for j in range(lstr1 + 1)]  # 多一位
@@ -126,8 +133,8 @@ def inclusion(_str1,_str2):
                     maxNum = record[i + 1][j + 1]
                     # 记录最大匹配长度的终止位置
                     p = i + 1
+    return maxNum
 
-    return maxNum/max(len(_str1),len(_str2))
 
 # 英文 文字包含或被包含关系
 def inclusion_Eng(_str1,_str2):
@@ -141,23 +148,9 @@ def inclusion_Eng(_str1,_str2):
 
     lstr1 = len(list1)
     lstr2 = len(list2)
-    record = [[0 for i in range(lstr2 + 1)] for j in range(lstr1 + 1)]  # 多一位
-    ###维度为 lstr1+1 * lstr2＋１　的矩阵。字符要转成ｕｎｉｃｏｄｅ
-    maxNum = 0  # 最长匹配长度
-    p = 0  # 匹配的起始位
+    maxNum = maxMatchLen(list1, list2)
 
-    for i in range(lstr1):
-        for j in range(lstr2):
-            if list1[i] == list2[j]:
-                # 相同则累加
-                record[i + 1][j + 1] = record[i][j] + 1
-                if record[i + 1][j + 1] > maxNum:
-                    # 获取最大匹配长度
-                    maxNum = record[i + 1][j + 1]
-                    # 记录最大匹配长度的终止位置
-                    p = i + 1
-
-    return maxNum / max(lstr1,lstr2)
+    return maxNum / min(lstr1,lstr2)
 
 # 中 文字排列组合方式
 def combination(_str1,_str2):
@@ -194,7 +187,7 @@ def combination_Eng(_str1,_str2):
                 continue
             ans += 1
             vis_list2[i_2] = True
-    return ans/max(len(list1),len(list2))
+    return ans/min(len(list1),len(list2))
 
 
 # 中文拼音编辑距离
