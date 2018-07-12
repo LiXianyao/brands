@@ -11,10 +11,10 @@ reload(sys)
 sys.setdefaultencoding( "utf-8" )
 cf = ConfigParser.ConfigParser()
 cf.read("redis.config")
-fixed_ip = cf.get("redis","fixed_ip")
-fixed_port = cf.get("redis","fixed_port")
-fixed_db = cf.get("redis","fixed_db")
-default_pwd = cf.get("redis","default_pwd")
+redis_ip = cf.get("redis","redis_ip")
+redis_port = cf.get("redis","redis_port")
+redis_db = cf.get("redis","redis_db")
+redis_pwd = cf.get("redis","redis_pwd")
 
 from processdata.database import db_session
 from processdata.brand_item import BrandItem
@@ -98,7 +98,7 @@ def form_train_data_redis(lowb, num):
     file_names = range(1, 14)##其实就是从a.csv到b.csv里面获取数据
 
     item_dict = load_brand_item()
-    db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=default_pwd)
+    db = redis.StrictRedis(host=redis_ip, port=redis_port, db=redis_db, password=redis_pwd)
     _pipe = db.pipeline()
 
     old = 0

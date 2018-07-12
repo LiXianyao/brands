@@ -28,6 +28,7 @@ conn.connect()
 conn.subscribe(destination='/queue/brandRes',id=1,ack='auto')
 
 s_json = {
+            #"type":"reload",
             #"type":"predict",
             "type":"shutdown",
             "text":

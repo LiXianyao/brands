@@ -112,7 +112,7 @@ def inclusion(_str1,_str2):
 
     maxNum = maxMatchLen(_str1, _str2)
 
-    return maxNum/max(len(_str1),len(_str2))
+    return maxNum/min(len(_str1),len(_str2))
 
 ###计算最大匹配长度
 def maxMatchLen(_str1, _str2):
@@ -167,7 +167,7 @@ def combination(_str1,_str2):
                 continue
             ans += 1
             vis_list2[i_2] = True
-    return ans/max(len(list1),len(list2))
+    return ans/min(len(list1),len(list2))
 
 # 英文 文字排列组合方式
 def combination_Eng(_str1,_str2):

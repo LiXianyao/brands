@@ -38,12 +38,6 @@ app.config.from_object('flask_config')
 record_id_dict = {}
 record_time_dict = {}
 
-"""只是一个手写的检查json里是否有可选字段的赋值函数"""
-"""
-    目前的可选字段是：1、额外信息 extraInformation：姓名、性别等的分析。
-                     2、目标匹配标识 templateMatching。
-                     3、黑词匹配标识 analysisFilter。
-"""
 def getOrDefault(input_json, segName, default):
     try:
         return input_json[segName]
@@ -200,12 +194,8 @@ def reloadTrain():
 def setup():
     global record_id_dict, record_time_dict
     db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=fixed_pwd)
-    _pipe = db.pipeline()
     class_no_set = range(1, 46)
     record_key = "rd::"
-    record_key_time = "rdt::"
-    rset_key_prefix = "rset::"
-    detail_key_prefix = "dtl::"
     ###获得所有的历史商标, 结果结构为 申请时间 -》 【商标名，商标编号，商标状态】
     record_id_dict, record_time_dict = form_pre_data_IV_flask.getHistoryBrand(record_key, db, class_no_set)
     print "history brand ready"
@@ -216,6 +206,7 @@ class NonASCIIJsonEncoder(json.JSONEncoder):
         super(NonASCIIJsonEncoder, self).__init__(**kwargs)
 
 app.json_encoder = NonASCIIJsonEncoder
-setup()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
+    setup()

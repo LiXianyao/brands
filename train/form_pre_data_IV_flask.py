@@ -8,8 +8,7 @@ from itertools import combinations
 import datetime
 import trans_pre_data
 from similarity import brand
-import csv
-import json
+import threading
 import  traceback
 sys.path.append("..")
 reload(sys)
@@ -32,7 +31,7 @@ detail_key_prefix = "dtl::"
 def load_brand_item():
     from processdata import brand_item
     item_list = brand_item.BrandItem.query.all()
-    brand_item.db_session.rollback()
+    #brand_item.db_session.rollback()
     item_dict = {}
     for item in item_list:
         item_name = item.item_name
@@ -41,12 +40,9 @@ def load_brand_item():
     del brand_item
     return item_dict
 
-###小项id ->小项名的映射
-item_dict = load_brand_item()
-
 
 ###redis数据库
-def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass = True, AllRes = True):
+def form_pre_data_flask(input_json, record_id_dict, record_key_dict, item_dict, AllClass = True, AllRes = True):
     brand_name = input_json["name"]
     brand_name_china = brand.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china)
@@ -59,7 +55,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     else:
         class_no_set = range(1,46)
     reload(brand)
-    #print "brand name is %s, with searching class: %s"%(brand_name,str(class_no_set))
+    print "brand name is %s, with searching class: %s, len id_dict=%d, len key_dict=%d"%(brand_name,str(class_no_set), len(record_id_dict),len(record_key_dict))
 
     # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）， 包含被包含（越大越近）
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
@@ -75,9 +71,10 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     try:
         for class_no in class_no_set:
             #print class_no
-            if class_no not in record_time_dict:
+            if class_no >= len(record_key_dict):
                 continue
-            compare_list = record_time_dict[class_no]
+            #print "in ",class_no
+            compare_list = record_key_dict[class_no]
             ###确定都有哪些拼音在大类中有
             exsit_py = set(brand_name_pinyin).intersection(compare_list.keys())
             #print brand_name_pinyin, exsit_py
@@ -89,10 +86,10 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
                 py_combi = combinations(exsit_py, py_low)
                 union = set()
                 for combi in py_combi:
-                    inter = set(record_time_dict[class_no][combi[0]])
+                    inter = set(record_key_dict[class_no][combi[0]])
                     s = combi[0]
                     for i in range(1,len(combi)):
-                        inter = inter & record_time_dict[class_no][combi[i]]
+                        inter = inter & record_key_dict[class_no][combi[i]]
                         s += " " + combi[i]
 
                     union = union | inter
@@ -100,18 +97,18 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
                     #print "py union has %d"%(len(union))
             else:
                 continue
-                union = set(record_time_dict[class_no]["ENG"])
             del compare_list
             #print "py union has %d"%(len(union))
             compare_list = list(union)
             for i in range(len(compare_list)):
-                compare_unit = record_id_dict[compare_list[i]]
-                his_name = compare_unit["name"].decode("utf-8")
-                his_name_pinyin = compare_unit["py"]
-                his_name_china = compare_unit["ch"]
-                brand_no_his = compare_unit["no"]
+                compare_unit = record_id_dict[class_no][compare_list[i]]
+                his_name = compare_unit[0].decode("utf-8")
+                brand_no_his = compare_unit[1]
+                his_name_pinyin = compare_unit[3]
+                his_name_china = compare_unit[4]
                 last_class[class_no] = compare_unit
                 #start_time_s = datetime.datetime.now()
+                #print brand_name, his_name
                 if judge_pinyin(brand_name_pinyin, his_name_pinyin) == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
@@ -121,6 +118,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
 
                 #start_time_c = datetime.datetime.now()
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
+                #print brand_name, his_name, compare_Res
                 #end_time_c = datetime.datetime.now()
                 #cost_time_c = (end_time_c - start_time_c).total_seconds()
                 #print "两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
@@ -130,7 +128,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
                         out_row = [brand_name, his_name, brand_no_his,
                                    class_no]
                         out_row.extend(compare_Res)
-                        out_row.extend([compare_unit["status"]])
+                        out_row.extend([compare_unit[2]])
                         out_row.extend('1')
                         return_list.append(out_row)
                     else:
@@ -144,19 +142,20 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     ###没有相似商标的情况
     try:
         for class_no in class_no_set:
+            #continue
             if similar_cnt[class_no] == 0:
                 compare_unit = last_class[class_no]
                 if compare_unit == None:
                     continue
                 similar_cnt[class_no] += 1
-                his_name = compare_unit["name"].decode("utf-8")
-                brand_no_his = compare_unit["no"]
+                his_name = compare_unit[0].decode("utf-8")
+                brand_no_his = compare_unit[1]
                 compare_Res = brand.getCharacteristics(brand_name, his_name)###构造返回结果：近似商标名（及特征）
                 if AllRes == True:
                     out_row = [brand_name, his_name, brand_no_his,
                                class_no]
                     out_row.extend(compare_Res)
-                    out_row.extend([compare_unit["status"]])
+                    out_row.extend([compare_unit[3]])
                     out_row.extend('0')
                     return_list.append(out_row)
                 else:
@@ -170,7 +169,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
         try:
             reload(trans_pre_data)
             db, _pipe = createRedisConnection()
-            itemList = getItemListOfBrand(return_list, _pipe)
+            itemList = getItemListOfBrand(return_list, item_dict, _pipe)
             return_list = trans_pre_data.trans_pre_data_web(return_list, itemList, class_no_set)
         except:
             print traceback.format_exc()
@@ -184,12 +183,11 @@ def form_pre_data_flask(input_json, record_id_dict, record_time_dict, AllClass =
     ###调用预测模块添东西
     end_time_c = datetime.datetime.now()
     cost_time_c = (end_time_c - start_time_c).total_seconds()
-    print "进程查询耗时为 :", cost_time_c
+    print u"进程查询耗时为 :", cost_time_c
     return return_list
 
 ##根据给定的商标id和大类。获取这个商标在这个大类下的小项id
-def getItemListOfBrand(data_list , _pipe):
-    global item_dict
+def getItemListOfBrand(data_list , item_dict, _pipe):
     for brand in data_list:
         brand_no = brand[2]
         class_no = brand[3]
@@ -269,43 +267,58 @@ def form_vis_list(a_list):
 
 ###从redis中获取所有的历史商标构成的set(带时间戳的)
 def getHistoryBrand(record_key_prefix, db, class_no_set):
-    record_key_dict = {}
-    record_id_dict = {}
-    cnt_id = 0
-    for class_no in class_no_set:
+    record_key_dict = []
+    record_id_dict = []
+    for cnt_class in range(len(class_no_set)):
+        class_no = class_no_set[cnt_class]
         ##依次获取每个大类的
-        record_key_time_set = db.smembers(record_key_prefix + str(class_no))
-        print "prepare key %s"%(record_key_prefix + str(class_no))
-        for record_key in record_key_time_set:
-            brand_name, brand_no, brand_status = record_key.split("&*(")
+        record_key_dict.append({})
+        record_id_dict.append([])
+        formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key_dict, cnt_class)
 
-            ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
-            brand_china = brand.get_china_str(brand_name)
-            brand_pinyin = lazy_pinyin(brand_china)
-            brand_num, brand_eng = brand.get_not_china_list(brand_name)
-            brand_pinyin.extend(brand_eng)
-
-            record_id_dict[cnt_id] = {
-                                        "name":brand_name,
-                                        "no":brand_no,
-                                        "status":brand_status,
-                                        "py": brand_pinyin,
-                                        "ch": brand_china
-                                    }
-
-            try:
-                record_key_dict[class_no]
-            except:
-                record_key_dict[class_no] = {}
-
-            if len(brand_pinyin)==0:
-                continue
-            for pinyin in brand_pinyin:
-                if record_key_dict[class_no].has_key(pinyin) == False:
-                    record_key_dict[class_no][pinyin] = set()
-                record_key_dict[class_no][pinyin].add(cnt_id)
-            cnt_id += 1
     return record_id_dict , record_key_dict
+
+###读取单个大类的数据并构造拼音字集合
+def formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key_dict, cnt_class):
+    record_key_time_set = db.smembers(record_key_prefix + str(class_no))
+    cnt_id = 0
+    print "prepare key %s" % (record_key_prefix + str(class_no))
+    for record_key in record_key_time_set:
+        brand_name, brand_no, brand_status = record_key.split("&*(")
+
+        ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
+        brand_china = brand.get_china_str(brand_name)
+        brand_pinyin = lazy_pinyin(brand_china)
+        brand_num, brand_eng = brand.get_not_china_list(brand_name)
+        brand_pinyin.extend(brand_eng)
+
+        record_id_dict[cnt_class].append([
+            brand_name,
+            brand_no,
+            brand_status,
+            brand_pinyin,
+            brand_china
+        ])
+        cnt_id += 1
+        if len(brand_pinyin) == 0:
+            continue
+        for pinyin in brand_pinyin:
+            if record_key_dict[cnt_class].has_key(pinyin) == False:
+                record_key_dict[cnt_class][pinyin] = set()
+            record_key_dict[cnt_class][pinyin].add(cnt_id - 1)
+
+    print "key %s is ready" % (record_key_prefix + str(class_no))
+    record_key_time_set.clear()
+    del record_key_time_set
+    """
+    if "ai" in record_key_dict[cnt_class].keys():
+        printcnt = 0
+        for id in record_key_dict[cnt_class]["ai"]:
+            print str(record_id_dict[cnt_class][id]).replace('u\'', '\'').decode("unicode-escape")
+            printcnt += 1
+            if printcnt >= 5:
+                break
+    """
 
 def compute_similar(brand_name, his_name, gate):
     compare_Res = brand.getCharacteristics(brand_name, his_name)
@@ -345,12 +358,12 @@ def judgeSameClass(product_no_set, brand_no_his, rset_key_prefix, _pipe):
 def createRedisConnection():
     cf = ConfigParser.ConfigParser()
     cf.read("redis.config")
-    fixed_ip = cf.get("redis", "fixed_ip")
-    fixed_port = cf.get("redis", "fixed_port")
-    fixed_db = cf.get("redis", "fixed_db")
-    default_pwd = cf.get("redis", "default_pwd")
+    redis_ip = cf.get("redis", "redis_ip")
+    redis_port = cf.get("redis", "redis_port")
+    redis_db = cf.get("redis", "redis_db")
+    redis_pwd = cf.get("redis", "redis_pwd")
 
-    db = redis.StrictRedis(host=fixed_ip, port=fixed_port, db=fixed_db, password=default_pwd)
+    db = redis.StrictRedis(host=redis_ip, port=redis_port, db=redis_db, password=redis_pwd)
     _pipe = db.pipeline()
     return db, _pipe
 ##975418个不同的商标，12277622
@@ -370,10 +383,10 @@ if __name__=="__main__":
 
     db, _pipe = createRedisConnection()
     ###获得所有的历史商标, 结果结构为 申请时间 -》 【商标名，商标编号，商标状态】
-    record_id_dict, record_time_dict = getHistoryBrand(record_key, db, class_no_set)
+    record_id_dict, record_key_dict = getHistoryBrand(record_key, db, class_no_set)
     print "history brand ready"
 
-    return_list = form_pre_data_flask(input_json, record_id_dict, record_time_dict)
+    return_list = form_pre_data_flask(input_json, record_id_dict, record_key_dict)
     #load_brand_item()
 
     csv_name = u"pre_7_2_flask.csv"
