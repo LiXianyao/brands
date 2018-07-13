@@ -165,7 +165,7 @@ def load_redis(class_no):
 
 def get_request(process_id, process_share_dict, input_json, item_dict = None):
     global  record_id_dict , record_key_dict
-    if len(record_id_dict) == 1:
+    if len(record_id_dict) == 0:
         print "class %d haven't loaded!" % process_id
         load_redis(process_id)
         print "class load complete! id dict size=%d"%(len(record_id_dict))
@@ -193,9 +193,9 @@ def init_multiprocess():
     running_process = []
     for i in range(pool_num):
         processPool = Pool(process_num)
+        processPoolSet.append(processPool)
         for j in range(process_num):
             running_process.append(processPool.apply_async(load_redis, args=(i,)) )
-        processPoolSet.append(processPool)
 
     for process in running_process:
         process.wait()
