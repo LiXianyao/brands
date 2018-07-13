@@ -269,17 +269,17 @@ def form_vis_list(a_list):
 def getHistoryBrand(record_key_prefix, db, class_no_set):
     record_key_dict = []
     record_id_dict = []
-    for cnt_class in range(len(class_no_set)):
-        class_no = class_no_set[cnt_class]
-        ##依次获取每个大类的
+    for i in range(46):
         record_key_dict.append({})
         record_id_dict.append([])
-        formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key_dict, cnt_class)
+    for class_no in class_no_set:
+        ##依次获取每个大类的
+        formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key_dict)
 
     return record_id_dict , record_key_dict
 
 ###读取单个大类的数据并构造拼音字集合
-def formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key_dict, cnt_class):
+def formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key_dict):
     record_key_time_set = db.smembers(record_key_prefix + str(class_no))
     cnt_id = 0
     print "prepare key %s" % (record_key_prefix + str(class_no))
@@ -292,7 +292,7 @@ def formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key
         brand_num, brand_eng = brand.get_not_china_list(brand_name)
         brand_pinyin.extend(brand_eng)
 
-        record_id_dict[cnt_class].append([
+        record_id_dict[class_no].append([
             brand_name,
             brand_no,
             brand_status,
@@ -303,18 +303,18 @@ def formOneClassData(record_key_prefix, class_no, db, record_id_dict, record_key
         if len(brand_pinyin) == 0:
             continue
         for pinyin in brand_pinyin:
-            if record_key_dict[cnt_class].has_key(pinyin) == False:
-                record_key_dict[cnt_class][pinyin] = set()
-            record_key_dict[cnt_class][pinyin].add(cnt_id - 1)
+            if record_key_dict[class_no].has_key(pinyin) == False:
+                record_key_dict[class_no][pinyin] = set()
+            record_key_dict[class_no][pinyin].add(cnt_id - 1)
 
     print "key %s is ready" % (record_key_prefix + str(class_no))
     record_key_time_set.clear()
     del record_key_time_set
     """
-    if "ai" in record_key_dict[cnt_class].keys():
+    if "ai" in record_key_dict[class_no].keys():
         printcnt = 0
-        for id in record_key_dict[cnt_class]["ai"]:
-            print str(record_id_dict[cnt_class][id]).replace('u\'', '\'').decode("unicode-escape")
+        for id in record_key_dict[class_no]["ai"]:
+            print str(record_id_dict[class_no][id]).replace('u\'', '\'').decode("unicode-escape")
             printcnt += 1
             if printcnt >= 5:
                 break
