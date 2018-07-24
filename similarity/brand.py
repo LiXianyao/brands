@@ -167,6 +167,7 @@ def combination(_str1,_str2):
                 continue
             ans += 1
             vis_list2[i_2] = True
+            break
     return ans/min(len(list1),len(list2))
 
 # 英文 文字排列组合方式
@@ -187,6 +188,7 @@ def combination_Eng(_str1,_str2):
                 continue
             ans += 1
             vis_list2[i_2] = True
+            break
     return ans/min(len(list1),len(list2))
 
 

@@ -106,7 +106,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_key_dict, item_dict, 
                 brand_no_his = compare_unit[1]
                 his_name_pinyin = compare_unit[3]
                 his_name_china = compare_unit[4]
-                last_class[class_no] = compare_unit
+                #last_class[class_no] = compare_unit
                 #start_time_s = datetime.datetime.now()
                 #print brand_name, his_name
                 if judge_pinyin(brand_name_pinyin, his_name_pinyin) == False:
