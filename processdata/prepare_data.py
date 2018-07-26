@@ -160,7 +160,7 @@ def form_brand_record_redis():
 
                     ##解析数据行的商标名
                     brand_name = ','.join(line[3: product_list_head])
-                    if brand_name == "图形" or len(brand_name) == 0:  # 商标名是图形的其实是图形商标
+                    if brand_name == u"图形" or len(brand_name) == 0:  # 商标名是图形的其实是图形商标
                         continue
 
                     ###数据行可用，开始逐个小项进行处理
@@ -237,13 +237,14 @@ def add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_se
     brand_num, brand_eng = brand.get_not_china_list(brand_name)
 
     record_dict = {
+        "bid": b_setid,
         "name": brand_name,
         "no": brand_no,
         "sts": brand_status,
-        "py" : brand_pinyin,
-        "ch" :brand_china,
-        "eng": brand_eng,
-        "num": brand_num,
+        "py" : ','.join(brand_pinyin),
+        "ch" : brand_china,
+        "eng": ','.join(brand_eng),
+        "num": ','.join(brand_num),
         "date": apply_date
     }
     ###存储数据
@@ -255,12 +256,14 @@ def add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_se
 
 
     ###存储拼音/英文字集合
-    brand_pinyin.extend(brand_eng)
-    brand_pinyin.extend(brand_num)
-    if len(brand_pinyin) > 0:
+    brand_py_unit = []
+    brand_py_unit.extend(brand_pinyin)
+    brand_py_unit.extend(brand_eng)
+    brand_py_unit.extend(brand_num)
+    if len(brand_py_unit) > 0:
         ##构造1~3元组合
         for combi_low in range(1, 3):
-            combi_set = combinations(brand_pinyin, combi_low)
+            combi_set = combinations(brand_py_unit, combi_low)
             ###对每种组合都存一个集合
             for combi in combi_set:
                 set_key = pyset_key_prefix + str(class_no) + "::" + ','.join(combi) ##key = "bPySet::1::ni2,hao3" ,类似这样的

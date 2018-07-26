@@ -84,5 +84,5 @@ def save_input_file(input_lines, input_file_name):
 
 ###将web请求筛选计算后的特征转成输入数据
 def trans_pre_data_web(data_list, item_list, class_no_set):
-    taskId = datetime.datetime.now().strftime('%H%M%S%f')
+    taskId = str(os.getpid())
     return trans_Data(taskId, data_list, item_list, class_no_set)

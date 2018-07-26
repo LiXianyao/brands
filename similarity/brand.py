@@ -13,7 +13,7 @@ import re
 
 # 判断是否为汉字字符串
 # 存在汉字，判断为汉字字符串
-from pypinyin import lazy_pinyin
+from pypinyin import lazy_pinyin, Style
 import jieba
 def isChina(_str):
     for ch in _str.decode("utf-8"):
@@ -199,9 +199,9 @@ def pinyinEditDistance(_str1,_str2):
 
     zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
     if zhPattern.search(_str1):
-        _str1 = ' '.join(lazy_pinyin(_str1))
+        _str1 = ' '.join(lazy_pinyin(_str1, style=Style.TONE3))
     if zhPattern.search(_str2):
-        _str2 = ' '.join(lazy_pinyin(_str2))
+        _str2 = ' '.join(lazy_pinyin(_str2, style=Style.TONE3))
     #整个串内的中文转拼音后，求两个拼音（和原非中文）串/串1长度
     return 1.0 - distance(_str1,_str2)/max(len(_str1),len(_str2))
 
