@@ -36,7 +36,7 @@ def load_brand_item():
     for item in item_list:
         item_name = item.item_name
         item_no = item.item_no
-        item_dict[item_no] = item_name
+        item_dict[item_no] = (item_no, item_name)
     del brand_item
     return item_dict
 
@@ -51,7 +51,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_key_dict, item_dict, 
     #print "pinyin plus eng = %s"%(brand_name_pinyin)
     #print AllClass, AllRes
     if AllClass == False:
-        class_no_set = input_json["class"]
+        class_no_set = input_json["categories"]
     else:
         class_no_set = range(1,46)
     reload(brand)
@@ -106,7 +106,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_key_dict, item_dict, 
                 brand_no_his = compare_unit[1]
                 his_name_pinyin = compare_unit[3]
                 his_name_china = compare_unit[4]
-                #last_class[class_no] = compare_unit
+                last_class[class_no] = compare_unit
                 #start_time_s = datetime.datetime.now()
                 #print brand_name, his_name
                 if judge_pinyin(brand_name_pinyin, his_name_pinyin) == False:
@@ -155,7 +155,7 @@ def form_pre_data_flask(input_json, record_id_dict, record_key_dict, item_dict, 
                     out_row = [brand_name, his_name, brand_no_his,
                                class_no]
                     out_row.extend(compare_Res)
-                    out_row.extend([compare_unit[3]])
+                    out_row.extend([compare_unit[2]])
                     out_row.extend('0')
                     return_list.append(out_row)
                 else:
@@ -379,7 +379,7 @@ if __name__=="__main__":
         exit(0)
 
 
-    class_no_set = set(input_json["class"])
+    class_no_set = set(input_json["categories"])
 
     db, _pipe = createRedisConnection()
     ###获得所有的历史商标, 结果结构为 申请时间 -》 【商标名，商标编号，商标状态】

@@ -27,10 +27,11 @@ def sortNames( (rate, title) ):##输入是一对元组
 
 ####近似名字对象
 class similarName:
-    def __init__(self, compareName, name, attriList):
+    def __init__(self, compareName, name, register_no, attriList):
         self.name = name
+        self.register_no = register_no
         self.calMaxAttri(attriList)
-        self.convertLabel(compareName)
+        self.convertTag(compareName)
 
     ###确定优先级最高的特征类型
     def calMaxAttri(self, attriList):
@@ -39,20 +40,22 @@ class similarName:
         #print self.name
         #for  (rate, title) in attriList:
         #    print title , rate
-        (self.maxAttri, self.maxAttriTitle) = (None, None)
+        (self.rate, self.rateTitle) = (None, None)
         for (rate, title) in attriList:
             if rate >= 0.66:  ###先按照优先级顺序找第一个满足阈值的类别
-                (self.maxAttri, self.maxAttriTitle) = (rate, title)
+                (self.rate, self.rateTitle) = (rate, title)
                 break
 
-        if (self.maxAttri, self.maxAttriTitle) == (None, None):
-            (self.maxAttri, self.maxAttriTitle) = max(attriList, key=lambda x: x[0])
+        if (self.rate, self.rateTitle) == (None, None):
+            (self.rate, self.rateTitle) = max(attriList, key=lambda x: x[0])
+        self.rate = round(self.rate * 100.0, 2) ##转换为百分数，两位小数
 
     ##转化特征类型为对应的标记
-    def convertLabel(self, compareName):
-        labelCode, label = convert.result(compareName, self.name, self.maxAttriTitle)
-        self.labelCode = labelCode
-        self.label = label
+    def convertTag(self, compareName):
+        tag, tagName = convert.result(compareName, self.name, self.rateTitle)
+        del self.rateTitle
+        self.tag = tag
+        self.tagName = tagName ###之后可以删
 
     def __repr__(self):
-        return repr((self.name, self.labelCode, self.label, self.maxAttri))
+        return repr((self.__dict__))
