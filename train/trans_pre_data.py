@@ -34,7 +34,7 @@ def trans_Data(taskId, data_list, item_list, class_no_set):
     else:
         predict_res = []
     ###统计计算每个大类的通过率
-    return compute_class_through_rate(data_list, item_list, predict_res, class_no_set)
+    return compute_class_through_rate_resEntity(data_list, item_list, predict_res, class_no_set)
 
 ###统计计算每个大类的通过率
 def  compute_class_through_rate(data_list, item_list, predict_res, class_no_set):
@@ -50,13 +50,15 @@ def  compute_class_through_rate(data_list, item_list, predict_res, class_no_set)
     for i in range(len(data_list)):
         this_name = data_list[i][0]
         his_name = data_list[i][1]
+        his_no = data_list[i][2]
         class_no = data_list[i][3]
         res_dict[class_no][u"商标名字"] = this_name
         ##单条的特征值
         attribute = data_list[i][4: 14]
-        similar_name_list[class_no].append( similarName(compareName=this_name, name=his_name, attriList=attribute))
+        similar_name_list[class_no].append( similarName(compareName=this_name, name=his_name, register_no=his_no, attriList=attribute))
 
-        for item in item_list[i]:
+        for (item_no, item_name) in item_list[i]:
+            item = str(item_no) + " " + str(item_name)
             if res_dict[class_no][u"商品项及注册成功率列表"].has_key(item) == False:
                 res_dict[class_no][u"商品项及注册成功率列表"][item] = [predict_res[i][1], his_name]
             elif res_dict[class_no][u"商品项及注册成功率列表"][item][0] > predict_res[i][1]:
@@ -64,16 +66,58 @@ def  compute_class_through_rate(data_list, item_list, predict_res, class_no_set)
 
     for class_no in class_no_set:
         ##近似列表排序
-        similar_name_list[class_no].sort(key = lambda similarName:(similarName.label, similarName.maxAttri))
+        similar_name_list[class_no].sort(key = lambda similarName:(similarName.tag, similarName.rate))
         for similarNameUnit in  similar_name_list[class_no]:
             res_dict[class_no][u"近似名字组"].append(similarNameUnit.name)
-            res_dict[class_no][u"名字近似度列表"].append(similarNameUnit.name + " " + str(similarNameUnit.maxAttri * 100.0) + "%")
-            res_dict[class_no][u"近似名字标签"].append(similarNameUnit.name + " " + similarNameUnit.label)
+            res_dict[class_no][u"名字近似度列表"].append(similarNameUnit.name + " " + str(similarNameUnit.rate) + "%")
+            res_dict[class_no][u"近似名字标签"].append(similarNameUnit.name + " " + similarNameUnit.tagName)
 
         ##调整成功率列表的结果
         for item in res_dict[class_no][u"商品项及注册成功率列表"].keys():
             res_dict[class_no][u"商品项及注册成功率列表"][item] = str(res_dict[class_no][u"商品项及注册成功率列表"][item][0]) + "%   " \
                                                                             "" + res_dict[class_no][u"商品项及注册成功率列表"][item][1]
+    return res_dict
+
+
+###统计计算每个大类的通过率
+def compute_class_through_rate_resEntity(data_list, item_list, predict_res, class_no_set):
+    goodsRate_dict = {}
+    similar_name_list = {}
+    import similarName, CategoryRetrievalResult, goodsRegisterRate
+    reload(similarName)
+    reload(CategoryRetrievalResult)
+    reload(goodsRegisterRate)
+    from similarName import similarName
+    from CategoryRetrievalResult import CategoryRetrievalResult
+    from goodsRegisterRate import goodsRegisterRate
+    for class_no in class_no_set:
+        goodsRate_dict[class_no] = {}
+        similar_name_list[class_no] = []
+
+    for i in range(len(data_list)):
+        this_name = data_list[i][0]
+        his_name = data_list[i][1]
+        his_no = data_list[i][2]
+        class_no = data_list[i][3]
+        ##单条的特征值
+        attribute = data_list[i][4: 14]
+        similar_name_list[class_no].append( similarName(compareName=this_name, name=his_name, register_no=his_no, attriList=attribute))
+
+        for (item_no, item_name) in item_list[i]:
+            if goodsRate_dict[class_no].has_key(item_no) == False:
+                goodsRate_dict[class_no][item_no] = goodsRegisterRate(item_no, item_name, predict_res[i][1], his_name)
+            else:
+                goodsRate_dict[class_no][item_no].updateRate(predict_res[i][1], his_name)
+
+    res_dict = {}
+    for class_no in class_no_set:
+        ##近似列表排序
+        similar_name_list[class_no].sort(key = lambda similarName:(similarName.tag, similarName.rate))
+        categoryResult = CategoryRetrievalResult(category= class_no,
+                                                 similarNameList= similar_name_list[class_no],
+                                                 goodsRegisterRateList= goodsRate_dict[class_no].values())
+        res_dict[class_no] = categoryResult
+    #print "res_dict =", res_dict
     return res_dict
 
 def save_input_file(input_lines, input_file_name):

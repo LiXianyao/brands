@@ -36,7 +36,7 @@ def load_brand_item():
     for item in item_list:
         item_name = item.item_name
         item_no = item.item_no
-        item_dict[item_no] = item_name
+        item_dict[item_no] = (item_no, item_name)
     del brand_item
     return item_dict
 
@@ -51,7 +51,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, AllClass = True, AllRe
     #print "pinyin plus eng = %s"%(brand_name_pinyin)
     #print AllClass, AllRes
     if AllClass == False:
-        class_no_set = input_json["class"]
+        class_no_set = input_json["categories"]
     else:
         class_no_set = range(1,46)
     reload(brand)

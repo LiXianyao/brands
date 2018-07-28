@@ -7,6 +7,7 @@ import ConfigParser
 import datetime, time, os, threading
 import traceback
 from train import form_pre_data_V_flask
+from BrandSimilarRetrievalResponse import BrandSimilarRetrievalResponse
 
 """Flask配置"""
 app = Flask(__name__)
@@ -28,17 +29,18 @@ def get_request(process_id, process_share_dict, input_json, item_dict = None, Al
     class_lowb = process_id * data_per_process + 1
     class_upb = min((process_id + 1) * data_per_process + 1, 46)
     if AllClass == True:
-        input_json["class"] = range(class_lowb, class_upb)
+        input_json["categories"] = range(class_lowb, class_upb)
     else:
-        input_json["class"] = set(input_json["class"]).intersection(set(range(class_lowb, class_upb)))
+        input_json["categories"] = set(input_json["categories"]).intersection(set(range(class_lowb, class_upb)))
     reload(form_pre_data_V_flask)
     ###redis连接
     fix_con = redis.StrictRedis(host=redis_ip, port=redis_port, db=redis_db, password=redis_pwd)
     _pipe = fix_con.pipeline()
     ##调用函数
     query_res = form_pre_data_V_flask.form_pre_data_flask(input_json, item_dict, fix_con, _pipe, AllClass = False, AllRes = AllRes)
-    for class_no in input_json["class"]:
+    for class_no in input_json["categories"]:
         process_share_dict[class_no] = query_res[class_no]
+    #print process_share_dict
     #oput = str(dict(process_share_dict)).replace('u\'', '\'')
     #print oput.decode("unicode-escape")
     print "process %d end"%process_id
@@ -111,14 +113,14 @@ def predictAllOnlyName():
 def predictAllAllRes():
     print "All allRes : ==============================>>>"
     #print request.form
-    #print request.json
+
     if request.method == 'POST':
         try:
             text = request.form['text']
             input_json = json.loads(text)
             #print input_json
         except:
-            input_json = request.json['text']
+            input_json = request.json
             #print input_json
 
     try:
@@ -162,6 +164,16 @@ def predictOnlyName():
 def predict(input_json, AllClass = False, AllRes = False):
     #print ">>>",AllClass, AllRes
     global processManager, processPool, process_num, item_dict
+    ###异常特判
+    if processPool == None or processManager == None:
+        responseEntity = BrandSimilarRetrievalResponse(brandName=input_json["name"],
+                                                       retrievalResult=[],
+                                                       resultCode="0",
+                                                       message="子进程pid=%d的进程池未初始化！请尝试通过/restProcessPool接口重置，或者重启服务"%os.getpid())
+        res = json.dumps(responseEntity, default=lambda obj: obj.__dict__, sort_keys=True,
+                         ensure_ascii=False)  # 将结果封装为json
+        return res
+
     try:
         start_time_c = datetime.datetime.now()
         process_share = processManager.dict()
@@ -177,8 +189,9 @@ def predict(input_json, AllClass = False, AllRes = False):
         print u"查询总耗时为 :", cost_time_c
 
         process_share_dict = dict(process_share)
-        input_json["searchRes"] = process_share_dict
-        res = json.dumps(input_json, ensure_ascii=False)  # 将结果封装为json
+        responseEntity = BrandSimilarRetrievalResponse(brandName= input_json["name"], retrievalResult= process_share_dict.values(), resultCode="1", message="")
+        #print len(responseEntity.retrievalResult)
+        res = json.dumps(responseEntity, default= lambda obj:obj.__dict__, sort_keys=True, ensure_ascii=False)  # 将结果封装为json
         process_share.clear()
         process_share_dict.clear()
         del running_process[:]
@@ -188,7 +201,12 @@ def predict(input_json, AllClass = False, AllRes = False):
         # 把这个e作为中间结果返回回去
         input_json["resultCode"] = "0"
         input_json["message"] = failed_Res
-        res = json.dumps(input_json, ensure_ascii=False)  # 将结果封装为json
+        responseEntity = BrandSimilarRetrievalResponse(brandName=input_json["name"],
+                                                       retrievalResult=[],
+                                                       resultCode="0",
+                                                       message=failed_Res)
+        res = json.dumps(responseEntity, default=lambda obj: obj.__dict__, sort_keys=True,
+                         ensure_ascii=False)  # 将结果封装为json
     input_json.clear()
     return res
 
@@ -216,14 +234,17 @@ def reloadPrediction():
 def shutdownProcess():
     try:
         global processPool, processManager
-        processPool.close()
-        processPool.join()
-        del processManager
-        del processPool
-        processManager = None
-        processPool = None
-        print "==============>>子进程池关闭成功，可以直接结束服务进程,pid = %d<<========================="%(os.getpid())
-        res = {"message": "子进程池关闭成功，可以直接结束服务进程！,pid=%d"%(os.getpid())}
+        if processPool == None:
+            res = {"message": "子进程未启动！,pid=%d" % (os.getpid())}
+        else:
+            processPool.close()
+            processPool.join()
+            del processManager
+            del processPool
+            processManager = None
+            processPool = None
+            print "==============>>子进程池关闭成功，可以直接结束服务进程,pid = %d<<========================="%(os.getpid())
+            res = {"message": "子进程池关闭成功，可以直接结束服务进程！,pid=%d"%(os.getpid())}
     except:
         print traceback.format_exc()
         res = {"message": "子进程池关闭失败！！检查日志,pid=%d"%(os.getpid())}
@@ -280,14 +301,16 @@ def updateConfigure():
 ###根据配置文件的更新重置进程池
 @app.route('/resetProcessPool', methods=['POST'])
 def resetProcessPool():
-    global cf, process_num, data_per_process, processPool
+    global cf, process_num, data_per_process, processPool, processManager
     cf.read("redis.config")
     process_num = int(cf.get("multiProcess", "process_num"))
     data_per_process = int(cf.get("multiProcess", "data_per_process"))
     processPool.close()
     processPool.join()
-    from multiprocessing import Pool
+    from multiprocessing import Pool, Manager
     processPool = Pool(process_num)
+    if processManager == None:
+        processManager = Manager()
     res = {"message": "服务进程池重置成功！！,pid=%d"%(os.getpid())}
     res = json.dumps(res, ensure_ascii=False)
     resp = make_response(res)
