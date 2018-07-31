@@ -163,3 +163,6 @@ train/data/
 flask/data/
 train/testRes/
 train/models/
+train/WriteMessage.py
+flask/log/
+train/train_*

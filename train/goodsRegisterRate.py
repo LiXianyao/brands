@@ -9,10 +9,11 @@ class goodsRegisterRate:
             self.rateName = rateName
 
     ###更新较小值
-    def updateRate(self, rate, rateName):
+    def updateRate(self, rate, rateName=None):
         if self.rate < rate:
             self.rate = rate
-            self.rateName = rateName
+            if rateName != None:
+                self.rateName = rateName
 
     def __repr__(self):
         return repr((self.__dict__))
