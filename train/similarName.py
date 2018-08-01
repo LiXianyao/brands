@@ -27,11 +27,12 @@ def sortNames( (rate, title) ):##输入是一对元组
 
 ####近似名字对象
 class similarName:
-    def __init__(self, compareName, name, register_no, attriList):
+    def __init__(self, compareName, name, register_no, attriList, predict_rate):
         self.name = name
         self.register_no = register_no
         self.calMaxAttri(attriList)
         self.convertTag(compareName)
+        #self.rate = predict_rate
 
     ###确定优先级最高的特征类型
     def calMaxAttri(self, attriList):
@@ -54,8 +55,8 @@ class similarName:
     def convertTag(self, compareName):
         tag, tagName = convert.result(compareName, self.name, self.rateTitle)
         del self.rateTitle
-        self.tag = tag
-        self.tagName = tagName ###之后可以删
+        self.tag = [tag]
+        #self.tagName = tagName ###之后可以删
 
     def __repr__(self):
         return repr((self.__dict__))

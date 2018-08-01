@@ -51,6 +51,7 @@ def get_request(process_id, process_share_dict, input_json, item_dict = None):
 """Flask配置"""
 app = Flask(__name__)
 app.config.from_object('flask_config')
+setup_flag = False
 
 """redis模板库的配置"""
 cf = ConfigParser.ConfigParser()
@@ -75,6 +76,7 @@ print u"==========》》进程%d 读取小项列表完成!  下一项：创建�
 processPool = Pool(total_process_num)
 print u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid())
 reload_sleep_time = 3
+setup_flag = True
 
 """##########################################服务进程的接口定义########################################################"""
 """########################
@@ -193,30 +195,6 @@ def shutdownProcess():
         response = RetrievalResponse(resultCode= "0", message= "子进程池关闭失败！！检查日志,pid=%d"%(os.getpid()) )
     return form_response(response)
 
-"""初始化运行环境，调用读入词典、短信模板等初始化函数"""
-def setup():
-    from multiprocessing import Pool, Manager
-    global processManager, processPool, total_process_num, item_dict, record_id_dict, record_key_dict
-    logger.info("setup process,",os.getpid())
-    processManager = Manager()
-    item_dict = form_pre_data_V_flask.load_brand_item()
-    logger.info(u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《================="%( os.getpid() ))
-    processPool = Pool(total_process_num)
-    logger.info(u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《================="%( os.getpid() ))
-
-###备用的启动接口
-@app.route('/setup', methods=['POST'])
-def webSetup():
-    try:
-        setup()
-        response_msg  =  "数据初始化成功！！！,pid=%d"%(os.getpid())
-        logger.info( "数据初始化成功！！！,pid=%d"%(os.getpid()) )
-        response = RetrievalResponse(resultCode= "1", message=response_msg)
-    except:
-        logger.error("调用服务初始化时发生异常!! pid=%d"%(os.getpid()), exc_info=True)
-        response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
-    return form_response(response)
-
 ##更新多进程配置参数
 ###只会改变执行时，每次请求使用多少进程，每个进程处理多少数据，改变进程数需要另外的
 @app.route('/updateConfigure', methods=['POST'])
@@ -232,9 +210,52 @@ def updateConfigure():
         response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
     return form_response(response)
 
+##接口可用性测试
+###检查接口是否启动完毕
+@app.route('/resetProcessPool', methods=['POST'])
+def resetProcessPool():
+    global logger
+    try:
+        loadConfiguration()  ##重新载入配置
+        global total_process_num, processPool, processManager
+        if processPool!= None:##关闭原来的进程池
+            processPool.close()
+            processPool.join()
+        from multiprocessing import Pool, Manager
+        processPool = Pool(total_process_num)
+        if processManager == None:
+            processManager = Manager()
+        response_msg  =  "服务进程池重置成功！！,pid=%d"%(os.getpid())
+        logger.info( "服务进程池重置成功！！,pid=%d"%(os.getpid()) )
+        response = RetrievalResponse(resultCode= "1", message=response_msg)
+    except:
+        logger.error("重置进程的子进程池时发生异常!!", exc_info=True)
+        response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
+    return form_response(response)
 
 ##重置进程池
 ###根据配置文件的更新重置进程池
+@app.route('/resetProcessPool', methods=['POST'])
+def resetProcessPool():
+    global logger
+    try:
+        loadConfiguration()  ##重新载入配置
+        global total_process_num, processPool, processManager
+        if processPool!= None:##关闭原来的进程池
+            processPool.close()
+            processPool.join()
+        from multiprocessing import Pool, Manager
+        processPool = Pool(total_process_num)
+        if processManager == None:
+            processManager = Manager()
+        response_msg  =  "服务进程池重置成功！！,pid=%d"%(os.getpid())
+        logger.info( "服务进程池重置成功！！,pid=%d"%(os.getpid()) )
+        response = RetrievalResponse(resultCode= "1", message=response_msg)
+    except:
+        logger.error("重置进程的子进程池时发生异常!!", exc_info=True)
+        response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
+    return form_response(response)
+
 @app.route('/resetProcessPool', methods=['POST'])
 def resetProcessPool():
     global logger

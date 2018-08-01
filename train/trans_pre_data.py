@@ -36,6 +36,8 @@ def trans_Data(taskId, data_list, item_list, class_no_set, item_dict={}):
 def compute_class_through_rate_resEntity(data_list, item_list, predict_res, class_no_set, item_dict):
     goodsRate_dict = {}
     similar_name_list = {}
+    import similarName
+    reload(similarName)
     from similarName import similarName
     from CategoryRetrievalResult import CategoryRetrievalResult
     from goodsRegisterRate import goodsRegisterRate
@@ -50,7 +52,7 @@ def compute_class_through_rate_resEntity(data_list, item_list, predict_res, clas
         class_no = data_list[i][3]
         ##单条的特征值
         attribute = data_list[i][4: 14]
-        similar_name_list[class_no].append( similarName(compareName=this_name, name=his_name, register_no=his_no, attriList=attribute))
+        similar_name_list[class_no].append( similarName(compareName=this_name, name=his_name, register_no=his_no, attriList=attribute, predict_rate=round(predict_res[i][1], 2)) )
 
         for (item_no, item_name) in item_list[i]:
             if goodsRate_dict[class_no].has_key(item_no) == False:
@@ -61,7 +63,7 @@ def compute_class_through_rate_resEntity(data_list, item_list, predict_res, clas
     res_dict = {}
     for class_no in class_no_set:
         ##近似列表排序
-        similar_name_list[class_no].sort(key = lambda similarName:(similarName.tag, similarName.rate))
+        similar_name_list[class_no].sort(key = lambda similarName:(similarName.tag[0], similarName.rate))
         ##近似名字没有包含的商品项添加到结果里
         for item_no in item_dict[class_no].keys():
             item_name = item_dict[class_no][item_no][1]
