@@ -1,11 +1,4 @@
 #-*-coding:utf8-*-#
-"""####
-读取csv,存到redis
-共维护以下 种key
-key                 type    value                       含义
-bdata::<class_no>   set     name&*(id&*(status          第<class_no>大类的所有商标数据（名和id和通告状态）
-bdata::<class_no>
-"""####
 from brand_item import BrandItem
 import csv
 import time

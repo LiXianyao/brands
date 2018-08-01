@@ -1,6 +1,4 @@
 #-*-coding:utf8-*-#
-from database import db_session
-from brand_record_group import BrandRecord
 from brand_item import BrandItem
 import csv
 import time
