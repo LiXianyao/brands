@@ -67,14 +67,16 @@ coreItem_process_num = int(cf.get("multiProcess","coreItem_process_num"))
 restItem_process_num = int(cf.get("multiProcess","restItem_process_num"))
 data_per_process = int(cf.get("multiProcess","data_per_process"))
 
-
-from multiprocessing import Pool, Manager
-print "setup process,", os.getpid()
-processManager = Manager()
-item_dict = form_pre_data_V_flask.load_brand_item()
-print u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《=================" % (os.getpid())
-processPool = Pool(total_process_num)
-print u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid())
+try:
+    from multiprocessing import Pool, Manager
+    print "setup process,", os.getpid()
+    processManager = Manager()
+    item_dict = form_pre_data_V_flask.load_brand_item()
+    print u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《=================" % (os.getpid())
+    processPool = Pool(total_process_num)
+    print u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid())
+except:
+    logger.error("进程池初始化失败！！！！", exc_info=True)
 reload_sleep_time = 3
 setup_flag = True
 
@@ -210,50 +212,25 @@ def updateConfigure():
         response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
     return form_response(response)
 
-##接口可用性测试
-###检查接口是否启动完毕
-@app.route('/resetProcessPool', methods=['POST'])
-def resetProcessPool():
-    global logger
-    try:
-        loadConfiguration()  ##重新载入配置
-        global total_process_num, processPool, processManager
-        if processPool!= None:##关闭原来的进程池
-            processPool.close()
-            processPool.join()
-        from multiprocessing import Pool, Manager
-        processPool = Pool(total_process_num)
-        if processManager == None:
-            processManager = Manager()
-        response_msg  =  "服务进程池重置成功！！,pid=%d"%(os.getpid())
-        logger.info( "服务进程池重置成功！！,pid=%d"%(os.getpid()) )
-        response = RetrievalResponse(resultCode= "1", message=response_msg)
-    except:
-        logger.error("重置进程的子进程池时发生异常!!", exc_info=True)
-        response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
-    return form_response(response)
 
-##重置进程池
-###根据配置文件的更新重置进程池
-@app.route('/resetProcessPool', methods=['POST'])
-def resetProcessPool():
+##测试接口的可用性
+###主要是测试初始化进程池是否完毕
+@app.route('/testUsage', methods=['POST'])
+def testUsage():
     global logger
-    try:
-        loadConfiguration()  ##重新载入配置
-        global total_process_num, processPool, processManager
-        if processPool!= None:##关闭原来的进程池
-            processPool.close()
-            processPool.join()
-        from multiprocessing import Pool, Manager
-        processPool = Pool(total_process_num)
-        if processManager == None:
-            processManager = Manager()
-        response_msg  =  "服务进程池重置成功！！,pid=%d"%(os.getpid())
-        logger.info( "服务进程池重置成功！！,pid=%d"%(os.getpid()) )
-        response = RetrievalResponse(resultCode= "1", message=response_msg)
-    except:
-        logger.error("重置进程的子进程池时发生异常!!", exc_info=True)
-        response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
+    global setup_flag, processPool, processManager
+    if setup_flag == False:##关闭原来的进程池
+        response_msg = "服务进程初始化未结束，请稍作等待！！,pid=%d" % (os.getpid())
+        logger.info(response_msg)
+        response = RetrievalResponse(resultCode="0", message=response_msg)
+    elif processPool == None or processManager == None:
+        response_msg = "服务进程初始化已结束，但进程池未启动，请尝试restProcessPool接口重置，或停止服务检查日志！！,pid=%d" % (os.getpid())
+        logger.error( response_msg )
+        response = RetrievalResponse(resultCode= "0", message=response_msg)
+    else:
+        response_msg = "服务进程初始化正常结束，可以发送请求！,pid=%d" % (os.getpid())
+        logger.error(response_msg)
+        response = RetrievalResponse(resultCode="1", message=response_msg)
     return form_response(response)
 
 @app.route('/resetProcessPool', methods=['POST'])
