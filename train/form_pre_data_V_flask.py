@@ -59,12 +59,12 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     start_time_c = datetime.datetime.now()
 
     return_list = []
+    py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
+    py_combi = combinations(brand_name_pinyin, py_low)
     try:
         for class_no in class_no_set:
-            py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
             if py_low > 0:
                 #共有拼音排列组合
-                py_combi = combinations(brand_name_pinyin, py_low)
                 union = set()
                 for combi in py_combi:
                     if len(combi)  == 1:
@@ -134,7 +134,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
 
     try:  ###使用特征数据计算分类
         reload(trans_pre_data)
-        itemList = getItemListOfBrand(return_list, item_dict, _pipe)
+        itemList = getItemListOfBrand(return_list, item_dict, _pipe)  ###查同音商标名注册的商品项
         return_list = trans_pre_data.trans_pre_data_web(return_list, itemList, class_no_set, item_dict=item_dict)
     except:
         error_occur = True
@@ -221,7 +221,7 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     if b_len < 3 and cnt_comm == len(b_list):
         # 输入商标的长度只有1或者2， 那么共有部分必须是1或者2
         return True
-    elif b_len >= 3 and cnt_comm >= max(int(b_len * 0.75), 2):  #
+    elif b_len >= 3 and cnt_comm >= max(int(b_len * 0.5), 2):  #
         #输入商标长度为3或者以上，那么部分重合就可以
         return True
 
@@ -237,7 +237,7 @@ def compute_py_lowb(brand_name_pinyin):
         return len(b_list)
     else:
         # print b_list,h_list
-        return max(int(len(b_list) * 0.75), 2)
+        return max(int(len(b_list) * 0.5), 2)
 
 def compute_similar(brand_name, his_name, gate):
     compare_Res = brand.getCharacteristics(brand_name, his_name)
