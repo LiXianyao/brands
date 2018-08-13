@@ -18,3 +18,9 @@ class BrandSimilarRetrievalResponse(object):
 
     def __repr__(self):
         return str(self.__dict__)
+
+    def countSimilarName(self):
+        countRes = {}
+        for result in self.retrievalResult:
+            countRes.update(result.countSimilarName)
+        return countRes

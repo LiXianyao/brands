@@ -52,7 +52,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C','C','C','C', 'N', 0.8, 0.8, 'C', 'C',1.0]
+    gate = ['C',0.8,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
 
     similar_cnt = {k:v for k,v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
     last_class = {k:v for k,v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
@@ -83,12 +83,14 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 his_name = compare_unit["name"].decode("utf-8")
                 brand_no_his = compare_unit["no"]
                 his_name_pinyin = compare_unit["py"]
+                his_name_eng = compare_unit["eng"]
+                his_name_pinyin = concate(his_name_pinyin, his_name_eng)
                 his_name_china = compare_unit["ch"]
                 his_name_bid = compare_unit["bid"]
                 last_class[class_no] = compare_unit
                 #start_time_s = datetime.datetime.now()
                 py_judge = judge_pinyin(brand_name_pinyin, his_name_pinyin)
-                #print "====",brand_name, his_name, py_judge, brand_name_pinyin, his_name_pinyin
+                #logger.info("====%s, %s, %s, %s, %s"%(brand_name, his_name, str(py_judge), str(brand_name_pinyin), his_name_pinyin) )
                 if py_judge == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
@@ -97,7 +99,10 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 #print "两商标计算拼音重合量的时间消耗为：", cost_time_s  #通常在1.5ms
                 #start_time_c = datetime.datetime.now()
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
-                #print ">>>>>",brand_name, his_name, compare_Res, similar
+                #if similar == True:
+                #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
+                #else:
+                #    logger.info("XXXXX%s,%s,%s,%s" % (brand_name, his_name, str(compare_Res), str(similar)))
                 #end_time_c = datetime.datetime.now()
                 #cost_time_c = (end_time_c - start_time_c).total_seconds()
                 #print "两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
@@ -218,10 +223,10 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     if h_len > cnt_comm + 4:  ##字数比较，被比较商标与输入商标，在公有部分的基础上长4以上就pass
         return False
 
-    if b_len < 3 and cnt_comm == len(b_list):
+    if b_len < 3 and cnt_comm > 0 and h_len < cnt_comm + 2:
         # 输入商标的长度只有1或者2， 那么共有部分必须是1或者2
         return True
-    elif b_len >= 3 and cnt_comm >= max(int(b_len * 0.5), 2):  #
+    elif b_len >= 3 and cnt_comm >= max(int(len(b_list) * 0.28), 2):  #
         #输入商标长度为3或者以上，那么部分重合就可以
         return True
 
@@ -234,19 +239,19 @@ def compute_py_lowb(brand_name_pinyin):
 
     if len(b_list) < 3:
         # print b_list, h_list, cnt_comm
-        return len(b_list)
+        return max(len(b_list) - 1, 1)
     else:
         # print b_list,h_list
-        return max(int(len(b_list) * 0.5), 2)
+        return max(int(len(b_list) * 0.28), 2)
 
 def compute_similar(brand_name, his_name, gate):
     compare_Res = brand.getCharacteristics(brand_name, his_name)
     similar = False
     for index in range(len(compare_Res)):
         if gate[index] == 'C':
-            if len(brand_name) < 4 and compare_Res[index] >= 0.75:
+            if len(brand_name) < 4 and compare_Res[index] >= 0.5:
                 similar = True
-            elif len(brand_name) >= 4 and compare_Res[index] >= 0.75:
+            elif len(brand_name) >= 4 and compare_Res[index] >= 0.5:
                 similar = True
         elif gate[index] == 'N':
             continue
@@ -255,6 +260,13 @@ def compute_similar(brand_name, his_name, gate):
                 similar = True
     return similar,  compare_Res
 
+def concate(his_name_pinyin, his_name_eng):
+    if len(his_name_pinyin) > 0:
+        if len(his_name_eng) > 0:
+            his_name_pinyin = his_name_pinyin + "," + his_name_eng
+    elif len(his_name_eng) > 0:
+        his_name_pinyin = his_name_eng
+    return his_name_pinyin
 
 
 

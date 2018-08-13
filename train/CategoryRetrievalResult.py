@@ -7,3 +7,6 @@ class CategoryRetrievalResult(object):
 
     def __repr__(self):
         return str(self.__dict__)
+
+    def countSimilarName(self):
+        return {self.category : len(self.similarName)}
