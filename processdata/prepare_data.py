@@ -153,6 +153,7 @@ def form_brand_record_redis():
 
                     ##解析数据行的商标名
                     brand_name = ','.join(line[3: product_list_head])
+                    brand_name = brand_name.strip()
                     if brand_name == u"图形" or len(brand_name) == 0:  # 商标名是图形的其实是图形商标
                         continue
 
