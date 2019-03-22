@@ -1,9 +1,9 @@
 #-*-coding:utf8-*-#
 from brand_item import BrandItem
-import csv
+import pandas as pd
 import time
 import json
-import  traceback
+import traceback
 import redis
 import ConfigParser
 import sys
@@ -12,23 +12,23 @@ from itertools import combinations
 reload(sys)
 sys.setdefaultencoding( "utf-8" )
 sys.path.append('..')
-
 from similarity import brand
 
 cf = ConfigParser.ConfigParser()
 cf.read("redis.config")
-redis_ip = cf.get("redis","redis_ip")
-redis_port = cf.get("redis","redis_port")
-redis_db = cf.get("redis","redis_db")
-redis_pwd = cf.get("redis","redis_pwd")
+redis_ip = cf.get("redis", "redis_ip")
+redis_port = cf.get("redis", "redis_port")
+redis_db = cf.get("redis", "redis_db")
+redis_pwd = cf.get("redis", "redis_pwd")
 
-date_origi_format = "%Y年%m月%d日"
+date_origi_format = u"%Y年%m月%d日"
 date_target_format = "%Y%m%d"
 
-rank_key_prefix = "brank::"
+rank_key_prefix = "bRank::"
 data_key_prefix = "bData::"
 pyset_key_prefix = "bPySet::"  # set
 item_key_prefix = "bItem::"
+
 
 def load_brand_item():
     item_list = BrandItem.query.all()
@@ -41,7 +41,6 @@ def load_brand_item():
         if group_no not in item_dict:
             item_dict[group_no] = {"class_no": class_no}
         item_dict[group_no][item_name] = item_no
-
     #for item in item_dict[101]:
     #    print item, item_dict[101][item]
     #print item_dict.keys()
@@ -65,6 +64,7 @@ def get_product_no_list(product_list_array, item_dict):
             class_no_set.add(class_no)
         except:
             ###现在的小项编号表里没有这个小项
+            #print "product %s not found!" % product_name
             pass
     return class_no_set, product_no_set
 
@@ -98,7 +98,7 @@ def clear_redis_key(prefix, db, _pipe):
     for key in old_data:
         _pipe.delete(key)
     _pipe.execute()
-    print "delete keys %s, %d"%(prefix, len(old_data))
+    print "delete keys of prefix '%s' num: %d"%(prefix, len(old_data))
     del old_data[:]
 
 ####record表存到redis中
@@ -114,7 +114,7 @@ def form_brand_record_redis():
 
     id_name_set = [{}]
     id_name_set_size = {}
-    for i in range(1,46):
+    for i in range(1, 46):
         id_name_set.append({})
         id_name_set_size[i] = 0
 
@@ -128,31 +128,32 @@ def form_brand_record_redis():
     for file_name in file_names:
         file_name = str(file_name) + ".csv"
         with open("../../csv3/" + file_name, "rU") as csv_file:
-            reader = csv.reader(csv_file, delimiter=',', quotechar='\n')
-            line_cnt = 0
+            reader = pd.read_csv(csv_file, names=["row_num", "unknow_num", "brand_no", "title", "product_list",
+                                                  "related", "apply_date", "i18n_type", "brand_status"], dtype='string')
+            print reader.dtypes
+            line_num = reader.shape[0] ##csv总行数
             ok_cnt = 0
-            for line in reader:
-                line_cnt += 1
-                if line_cnt == 1:
-                    continue
-                if len(line) < row_len:
-                    #print "line %d error, as:" % (line_cnt)
-                    continue
-
+            for line in range(1, line_num):
                 ###解析csv字段，并确定数据行的可用性
                 try:
                     ###解析数据行尾部
-                    brand_no, apply_date, i18n_type, brand_status = analysis_row_end(line)
+                    brand_no = reader["brand_no"][line]
+                    apply_date = reader["apply_date"][line]
+                    i18n_type = reader["i18n_type"][line]
+                    brand_status = reader["brand_status"][line]
                     if len(brand_status) > 1:
                         continue
 
                     ###解析小项列表的json字符串
-                    flag, product_list_head, product_list_array = analysis_product_list(line)
-                    if flag == True:
+                    try:
+                        product_list_array = json.loads(reader["product_list"][line])
+                    except:
+                        print "json loads error!, line = %d, %s"%(line, reader["product_list"][line])
+                        traceback.format_exc()
                         continue
 
                     ##解析数据行的商标名
-                    brand_name = ','.join(line[3: product_list_head])
+                    brand_name = reader["title"][line]
                     brand_name = brand_name.strip()
                     if brand_name == u"图形" or len(brand_name) == 0:  # 商标名是图形的其实是图形商标
                         continue
@@ -175,34 +176,34 @@ def form_brand_record_redis():
                             id_name_set_size[class_no] += 1
                             _pipe.zadd(rank_key_prefix + str(class_no) , b_setid, bkey)
                             cnt_op += 1
-                            cnt_op += add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_setid, _pipe)
+                            cnt_op += add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_setid, _pipe, line)
 
                         _pipe.sadd(item_key_prefix + str(class_no) + "::" + str(b_setid), product_no)
                         cnt_op += 1
                     ok_cnt += 1
                 except Exception, e:
                     pass
+                    print "error at line %d"%(line)
                     print traceback.format_exc()
 
-                if cnt_op >batch and line_cnt >= old:
+                if cnt_op >batch and line >= old:
                     try:
                         cnt_op = 0
                         _pipe.execute()
                     except:
-                        print "csv_file " + file_name + " produce %d rows" % (line_cnt)
+                        print "csv_file " + file_name + " produce %d rows" % (line)
                         print "error!!!", traceback.format_exc()
 
-                if line_cnt > term:
+                if line > term:
                     pass
                     #break
-                #break
             try:
                 cnt_op = 0
                 _pipe.execute()
             except:
                 print "error!!!", traceback.format_exc()
-            print "csv_file " + file_name + " has %d rows, legal rows are %d" % (line_cnt, ok_cnt)
-            if line_cnt > term:
+            print "csv_file " + file_name + " has %d rows, legal rows are %d" % (line, ok_cnt)
+            if line > term:
                 pass
                 #break
 
@@ -223,7 +224,7 @@ def form_brand_record_redis():
         print "key %s has %d keys, while key %s has %d" % (record_key, set_size, item_key, set_item_size)
 
 ###在redis数据库中增加一个新商标的相关数据
-def add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_setid, _pipe):
+def add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_setid, _pipe, line_no):
     ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
     cnt_op = 0
     brand_china = brand.get_china_str(brand_name)
@@ -265,7 +266,7 @@ def add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_se
                 _pipe.sadd(set_key, b_setid)
                 cnt_op += 1
     else:
-        print u"还有这样？？brand %s 解析出来什么都没有"%(brand_name)
+        print u"还有这样？？brand %s 解析出来什么都没有,line_no = %d"%(brand_name, line_no)
     return cnt_op
 
 

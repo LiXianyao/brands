@@ -9,7 +9,7 @@ class BrandItem(Base):
     id = Column(Integer,autoincrement=True, primary_key=True)
     item_no = Column(String(8))
     item_name = Column(String(64))
-    group_no =  Column(Integer,nullable=True)
+    group_no = Column(Integer,nullable=True)
     class_no = Column(String(4))
     # 查询构造器、、、
     query = db_session.query_property()
