@@ -354,6 +354,19 @@ def load_config_file(configFile):
 def printUsage():
     print "usage: classify_xgboost_offline_train.py -f <configFileName> -a [test|train]"
 
+"""读取配置文件"""
+def init_train_model(action, configFile = "train_models.config"):
+    print action
+    boost_parameters_dict, train_parameters_dict, action_parameters_dict, statistics_files_dict = load_config_file(
+        configFile)  # 读取训练配置文件
+    if action == 'train':
+        print "now train:"
+        train_model(str(action_parameters_dict['time_stamp']), boost_parameters_dict, train_parameters_dict,
+                    statistics_files_dict['train_statistics'], model_id=str(action_parameters_dict['model_id']))
+    elif action == 'test':
+        print "now test:"
+        test_model(str(action_parameters_dict['test_data_id']), str(action_parameters_dict['test_model']))
+
 if __name__ == "__main__":
     """这个主调用
     用途是读 构造好了的输入文件 ，然后训练模型/预测输出csv
@@ -377,11 +390,4 @@ if __name__ == "__main__":
             action = arg
         elif opt in ("-f","--file"):
             configFile = arg
-    print action
-    boost_parameters_dict, train_parameters_dict, action_parameters_dict, statistics_files_dict = load_config_file(configFile)  # 读取训练配置文件
-    if action == 'train':
-        print "now train:"
-        train_model(str(action_parameters_dict['time_stamp']), boost_parameters_dict, train_parameters_dict, statistics_files_dict['train_statistics'],model_id=str(action_parameters_dict['model_id']))
-    elif action == 'test':
-        print "now test:"
-        test_model(str(action_parameters_dict['test_data_id']), str(action_parameters_dict['test_model']))
+    init_train_model(action, configFile)
