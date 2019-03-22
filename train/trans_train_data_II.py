@@ -14,7 +14,6 @@ def train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict):
     csv_name = task_dict["train_set"]
     input_train_file_name = taskId + "_train"
     input_test_file_name = taskId + "_test"
-    upb = 10
     name_pair = set()
     with open(csv_name, "rU") as csv_file:
         input_lines = {"0":[], "1":[]}
@@ -133,6 +132,12 @@ def load_config_file(configFile):
     return task_dict, boost_parameters_dict, train_parameters_dict, cf
 
 
+def init_trans(taskId, configFile="train.config"):
+    print u"任务id为%s" % (taskId)
+    print "c=", configFile
+    task_dict, boost_parameters_dict, train_parameters_dict, cf = load_config_file(configFile) #读取训练配置文件
+    if task_dict["task_target"] == "train":
+        train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict)
 
 if __name__ == "__main__":
     """
@@ -156,12 +161,8 @@ if __name__ == "__main__":
     for opt, arg in opts:
         if opt in ("-i", "--id"):
             taskId = arg
-            nowtime = arg
         elif opt in ("-f", "--file"):
             configFile = arg
-    print "任务id为%s" % (nowtime)
-    print "c=", configFile
-    task_dict, boost_parameters_dict, train_parameters_dict, cf = load_config_file(configFile) #读取训练配置文件
-    if task_dict["task_target"] == "train":
-        train_Data(nowtime, task_dict, boost_parameters_dict, train_parameters_dict)
+
+    init_trans(taskId=taskId, configFile=configFile)
     # load_brand_item()
