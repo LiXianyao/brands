@@ -34,7 +34,7 @@ def contain(_str1,_str2):
     record = [[0 for i in range(lstr2 + 1)] for j in range(lstr1 + 1)]  # 多一位
     ###维度为 lstr1+1 * lstr2＋１　的矩阵。字符要转成ｕｎｉｃｏｄｅ
     maxNum = 0  # 最长匹配长度
-    p = 0  # 匹配的起始位
+    p = 0  # 记录最大匹配长度的终止位置
 
     for i in range(lstr1):
         for j in range(lstr2):
@@ -81,6 +81,6 @@ if __name__ == "__main__":
     print result(u"中华好", u"中华", "汉字包含被包含")
     print result(u"好中华", u"中华", "汉字包含被包含")
     print result(u"中华", u"大好中华", "汉字包含被包含")
-    print result(u"他中华", u"大好中华", "汉字包含被包含")
+    print result(u"他中华", u"大好他中", "汉字包含被包含")
     print result(u"中华人", u"大好中华", "汉字包含被包含")
     print result(u"他是中华人", u"大好中华", "汉字包含被包含")
