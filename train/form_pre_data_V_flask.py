@@ -14,7 +14,6 @@ reload(sys)
 sys.setdefaultencoding( "utf-8" )
 
 ###redis数据库 的前缀
-rank_key_prefix = "brank::"
 data_key_prefix = "bData::"
 pyset_key_prefix = "bPySet::"  # set
 item_key_prefix = "bItem::"
@@ -94,10 +93,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 if py_judge == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
-                #end_time_s = datetime.datetime.now()
-                #cost_time_s = (end_time_s - start_time_s).total_seconds()
-                #print "两商标计算拼音重合量的时间消耗为：", cost_time_s  #通常在1.5ms
-                #start_time_c = datetime.datetime.now()
+
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
                 #if similar == True:
                 #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
