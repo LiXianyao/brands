@@ -2,7 +2,7 @@
 import ConfigParser
 import redis
 
-class redis_connection:
+class RedisConnection:
     def __init__(self, config_file="storage_redis.config"):
         self.config_file_name = config_file
         ###读取配置文件
