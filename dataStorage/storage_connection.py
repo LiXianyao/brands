@@ -1,7 +1,10 @@
 #-*-coding:utf8-*-#
 import ConfigParser
 import redis
+import sys
+sys.path.append("..")
 from consoleLogger import logger
+
 
 class RedisConnection:
     def __init__(self, config_file="storage_redis.config"):
