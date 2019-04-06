@@ -20,15 +20,15 @@ class CsvReader:
         try:
             clean_csv_name = self.process_csv_data(csv_name.encode("utf8"))
             new_csv_name = self.reStoreCsv(clean_csv_name)
-            data = pd.read_csv(new_csv_name, encoding="utf-8", quotechar=None, quoting=3)
+            data = pd.read_csv(new_csv_name, encoding="utf-8", quotechar=None, quoting=3, dtype=str)
             rows, columns = data.shape
             logger.info(u"csv文件%s解析读取完成,共有%d行，%d列"%(csv_name, rows, columns))
             process_res = data
         except:
             res_state = False
-            logger.error(u"csv解析时错误发生")
-            logger.error(traceback.format_exc())
             process_res = u"文件解析错误，请检查csv文件的正确性、完整性（例如将其另存为utf8格式等）"
+            logger.error(process_res)
+            logger.error(traceback.format_exc())
         return res_state, process_res
 
 
