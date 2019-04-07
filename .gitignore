@@ -166,3 +166,4 @@ train/models/
 train/WriteMessage.py
 flask/log/
 train/train_*
+.idea/
