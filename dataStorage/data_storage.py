@@ -83,11 +83,13 @@ class DataStorage:
             logger.info(u"压缩包%s中数据文件解析成功，开始导入Redis数据库" % (zip_file_name.encode("utf8")))
 
             logger.info(u"开始导入csv文件:%s... ..." % info_csv_name)
-            line_num, info_ok_cnt = self.process_info_csv(info_data)
-            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d" % (info_csv_name, line_num, info_ok_cnt))
+            line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt = self.process_info_csv(info_data)
+            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d，"
+                        u"数据行不合法%d行，图形商标或无名字商标%d行，重复的注册号%d" %
+                        (info_csv_name, line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt))
 
             logger.info(u"开始导入csv文件:%s... ..." % item_csv_name)
-            line_num, item_ok_cnt = self.process_info_csv(item_data)
+            line_num, item_ok_cnt = self.process_item_csv(item_data)
             logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d" % (item_csv_name, line_num, item_ok_cnt))
 
             logger.info(u"压缩包%s中的信息已导入完毕，导入后的数据分布为：")
@@ -161,6 +163,9 @@ class DataStorage:
         ##先处理基本信息
         line_num = info_data.shape[0]  ##csv总行数
         info_ok_cnt = 0
+        info_invalid_cnt = 0
+        info_skip_cnt = 0
+        info_unique_cnt = 0
         for line in range(0, line_num):
             ###解析csv字段，并确定数据行的可用性
             try:
@@ -172,13 +177,16 @@ class DataStorage:
 
                 check_res, apply_date, class_no = self.check_info_valid(apply_date, class_no)
                 if not check_res:
-                    logger.error(u"发现错误数据行，数据行号%d，已跳过，原因：数据行内容取值不符合预期取值的格式" %
-                                 line_num)
+                    info_invalid_cnt += 1
+                    logger.error(u"发现错误数据行，数据行号%d，已跳过，原因：数据行内容取值不符合预期取值的格式,"
+                                 u"apply_date=%s, class_no = %s" %
+                                 (line, apply_date, class_no))
                     continue
 
                 ##解析数据行的商标名，是图形或者空就跳过
                 brand_name = info_data[u"商标名称"][line]
                 if brand_name == u"图形" or pd.isna(brand_name) or len(brand_name.strip()) == 0:  # 商标名是图形的其实是图形商标
+                    info_skip_cnt += 1
                     continue
                 brand_name = brand_name.strip()
 
@@ -192,13 +200,14 @@ class DataStorage:
                     b_id = self.redis_con.db.incr(hset_cnt_key)
                     self.redis_con.db.hset(hset_id_key, brand_no, b_id)
                     info_ok_cnt += 1
-                    self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line)
-
+                    info_skip_cnt += self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line)
+                else: ###重复的，只考虑更新专用期
+                    info_unique_cnt += 1
                 info_ok_cnt += 1
             except Exception, e:
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
                 logger.error(traceback.format_exc())
-        return line_num, info_ok_cnt
+        return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt
 
     def reset_redis_data(self):
         ##清理数据库原有的redis数据
@@ -231,6 +240,7 @@ class DataStorage:
         #print record_dict
         self.redis_con.pipe.hmset(data_key, record_dict)
 
+        cnt_skip = 0
         ###存储拼音/英文字集合
         brand_py_unit = []
         brand_py_unit.extend(brand_pinyin)
@@ -247,9 +257,11 @@ class DataStorage:
                     #print set_key
                     self.redis_con.pipe.sadd(set_key, b_id)
         else:
-            logger.debug(u"出现不含中文、英文与数字的商标，商标名：brand %s ,line_no = %d"%(brand_name, line_no))
+            cnt_skip = 1
+            logger.debug(u"出现不含中文、英文与数字的商标,或者只包含无法解析的字体/符号，商标名：brand %s ,line_no = %d"%(brand_name, line_no))
         ##批量插入
         self.redis_con.pipe.execute()
+        return cnt_skip
 
     def load_brand_item(self):
         item_list = BrandItem.query.all()
