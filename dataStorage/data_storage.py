@@ -1,7 +1,6 @@
 #-*-coding:utf8-*-#
 from brand_item import BrandItem
 import time
-import json
 import traceback
 from storage_connection import RedisConnection
 import pandas as pd
@@ -15,6 +14,7 @@ sys.path.append('..')
 from brandInfo.csvReader import CsvReader
 from consoleLogger import logger
 from similarity import strFunction
+from processdata.brand_history import BrandHistory, db_session
 
 class DataStorage:
     date_origin_format = "%Y-%m-%d %H:%M:%S"
@@ -29,7 +29,7 @@ class DataStorage:
     info_csv_name = u"注册商标基本信息.csv"
     item_csv_name = u"注册商标商品服务信息.csv"
 
-    def __init__(self, clean_out=False):
+    def __init__(self, clean_out=False, store_mysql=False):
         self.redis_con = RedisConnection()
         self.csv_reader = CsvReader()
         self.item_dict = self.load_brand_item()
@@ -48,7 +48,7 @@ class DataStorage:
                 else:
                     pass
                     logger.info(u"开始解压文件" + file_path + u"...")
-                    self.form_brand_record_redis(file_path)
+                    self.form_brand_record_redis(file_path, store_mysql)
 
     def check_info_valid(self, apply_date, class_no):
         check_res = True
@@ -68,7 +68,7 @@ class DataStorage:
         return check_res, apply_date, class_no
 
     ####record表存到redis中
-    def form_brand_record_redis(self, zip_file_name):
+    def form_brand_record_redis(self, zip_file_name, store_mysql):
         unzip_dir_name = zip_file_name.split(".zip")[0]
         os.system("unzip -o " + zip_file_name.encode("utf8") + " -d  " + unzip_dir_name.encode("utf8"))
 
@@ -83,19 +83,23 @@ class DataStorage:
             logger.info(u"压缩包%s中数据文件解析成功，开始导入Redis数据库" % (zip_file_name.encode("utf8")))
 
             logger.info(u"开始导入csv文件:%s... ..." % info_csv_name)
-            line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt = self.process_info_csv(info_data)
+            line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt \
+                = self.process_info_csv(info_data, store_mysql)
             logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d，"
                         u"数据行不合法%d行，图形商标或无名字商标%d行，重复的注册号%d" %
                         (info_csv_name, line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt))
 
             logger.info(u"开始导入csv文件:%s... ..." % item_csv_name)
-            line_num, item_ok_cnt = self.process_item_csv(item_data)
-            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d" % (item_csv_name, line_num, item_ok_cnt))
+            line_num, item_ok_cnt, item_invalid_class_cnt, item_invalid_group_cnt, item_invalid_product_cnt\
+                , item_miss_cnt = self.process_item_csv(item_data)
+            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d，"
+                        u"数据行不合法行：（国际类别不合法%d行，类似群不合法%d行，商品项不在尼斯文件内%d行）"
+                        u"，另外还有对应的注册号不在库中的数据%d行" %
+                        (item_csv_name, line_num, item_ok_cnt, item_invalid_class_cnt, item_invalid_group_cnt,
+                         item_invalid_product_cnt, item_miss_cnt))
 
             logger.info(u"压缩包%s中的信息已导入完毕，导入后的数据分布为：")
             self.key_statistic()
-
-
 
     def key_statistic(self):
         u"""
@@ -105,8 +109,8 @@ class DataStorage:
         for class_no in range(1, 46):
             record_key = self.rank_key_prefix + str(class_no) + "::id"
             record_cnt_key = self.rank_key_prefix + str(class_no) + "::cnt"
-            set_size = self.redis_con.db.hlen(record_key)
-            cnt_set_size = self.redis_con.db.get(record_cnt_key)
+            set_size = int(self.redis_con.db.hlen(record_key))
+            cnt_set_size = int(self.redis_con.db.get(record_cnt_key))
 
             data_key = self.data_key_prefix + str(class_no) + "::*"
             data_key_set = self.redis_con.db.keys(data_key)
@@ -115,7 +119,7 @@ class DataStorage:
             item_key = self.item_key_prefix + str(class_no) + "::*"
             item_key_set = self.redis_con.db.keys(item_key)
             set_item_size = len(item_key_set)
-            logger.info(u"第 %d 大类总计有 %d 个不同的注册号（计数量%d), "
+            logger.info(u"第 %d 大类总计有 %d 个不同的注册号（计数量%d), "\
                         u"对应的数据存储量%d, 商品项表%d"
                         % (class_no, set_size, cnt_set_size, set_data_size, set_item_size))
 
@@ -126,47 +130,68 @@ class DataStorage:
         ##先处理基本信息
         line_num = item_data.shape[0]  ##csv总行数
         item_ok_cnt = 0
+        item_invalid_class_cnt = 0
+        item_invalid_group_cnt = 0
+        item_invalid_product_cnt = 0
+        item_miss_cnt = 0
+        batch = 500000
         for line in range(0, line_num):
+            if line % batch == 0:
+                logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
             ###解析csv字段，并确定数据行的可用性
             ###解析数据行，检查取值
             brand_no = item_data[u"注册号/申请号"][line]
             group_no = item_data[u"类似群"][line]
             class_no = item_data[u"国际分类"][line]
-            item_name = item_data[u"商标中文名称"][line]
+            item_name = item_data[u'商品中文名称'][line]
 
             ##无效数据跳过
-            if int(class_no) not in range(1,46):
+            if pd.isna(class_no) or (int(class_no) < 1 and int(class_no) > 45):
+                item_invalid_class_cnt += 1
                 logger.debug(u"第%d行数据解析无效，已跳过，原因：国际分类编码不在区间内"%line)
                 continue
             if pd.isna(group_no) or len(group_no) != 4:
-                logger.debug(u"第%d行数据解析无效，已跳过，原因：类似群号为空或不在范围内"%line)
+                item_invalid_group_cnt += 1
+                #logger.debug(u"第%d行数据解析无效，已跳过，原因：类似群号为空或不在范围内"%line)
                 continue
             try:
-                product_no = self.item_dict[group_no][item_name]
+                product_no = self.item_dict[int(group_no)][item_name]
             except:
-                logger.debug(u"第%d行数据解析无效，已跳过，原因：商品中文名称%s不在尼斯文件规定的商品项内" % (line, str(item_name)))
+                item_invalid_product_cnt += 1
+                #logger.debug(u"第%d行数据解析无效，已跳过，原因：无效的群组号%s"\
+                #             u"或商品中文名称%s不在尼斯文件规定的商品项内" % (line, str(group_no), str(item_name)))
                 continue
 
             ##取到这个注册号的bid
             hset_id_key = self.rank_key_prefix + class_no + "::id"
             b_id = self.redis_con.db.hget(hset_id_key, brand_no)
             if not b_id:
+                item_miss_cnt += 1
                 continue
+            item_ok_cnt += 1
             self.redis_con.pipe.sadd(self.item_key_prefix + str(class_no) + "::" + str(b_id), product_no)
         self.redis_con.pipe.execute()
-        return line_num, item_ok_cnt
+        return line_num, item_ok_cnt, item_invalid_class_cnt, item_invalid_group_cnt, item_invalid_product_cnt, item_miss_cnt
 
     u"""
     处理基本信息的函数
     """
-    def process_info_csv(self, info_data):
+    def process_info_csv(self, info_data, store_mysql):
         ##先处理基本信息
         line_num = info_data.shape[0]  ##csv总行数
         info_ok_cnt = 0
         info_invalid_cnt = 0
         info_skip_cnt = 0
         info_unique_cnt = 0
+        batch = 100000
+        insert_list = []
         for line in range(0, line_num):
+            if line % batch == 0:
+                logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
+                if store_mysql == True:
+                    db_session.add_all(insert_list)
+                    db_session.commit()
+                    del insert_list[:]
             ###解析csv字段，并确定数据行的可用性
             try:
                 ###解析数据行，检查取值
@@ -187,26 +212,39 @@ class DataStorage:
                 brand_name = info_data[u"商标名称"][line]
                 if brand_name == u"图形" or pd.isna(brand_name) or len(brand_name.strip()) == 0:  # 商标名是图形的其实是图形商标
                     info_skip_cnt += 1
-                    continue
-                brand_name = brand_name.strip()
+                    brand_name = str(brand_name)
+                    insert_state = 2
+                else:
+                    brand_name = brand_name.strip()
+                    ##用id，按大类聚合
+                    ##检查大类里是否已经有了这个id
+                    hset_id_key = self.rank_key_prefix + class_no + "::id"
+                    hset_cnt_key = self.rank_key_prefix + class_no + "::cnt"
+                    insert_state = 1
+                    if not self.redis_con.db.hget(hset_id_key, brand_no):
+                        ###只有不在集合里，才生成并更新
+                        ##将他先加入某个大类，分配一个id，然后还要存储它的数据、构造读音集合等
+                        b_id = self.redis_con.db.incr(hset_cnt_key)
+                        self.redis_con.db.hset(hset_id_key, brand_no, b_id)
+                        info_ok_cnt += 1
+                        if self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line):
+                            info_skip_cnt += 1
+                            insert_state = 3
+                    else: ###重复的，只考虑更新专用期
+                        info_unique_cnt += 1
 
-                ##用id，按大类聚合
-                ##检查大类里是否已经有了这个id
-                hset_id_key = self.rank_key_prefix + class_no + "::id"
-                hset_cnt_key = self.rank_key_prefix + class_no + "::cnt"
-                if not self.redis_con.db.hget(hset_id_key, brand_no):
-                    ###只有不在集合里，才生成并更新
-                    ##将他先加入某个大类，分配一个id，然后还要存储它的数据、构造读音集合等
-                    b_id = self.redis_con.db.incr(hset_cnt_key)
-                    self.redis_con.db.hset(hset_id_key, brand_no, b_id)
-                    info_ok_cnt += 1
-                    info_skip_cnt += self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line)
-                else: ###重复的，只考虑更新专用期
-                    info_unique_cnt += 1
-                info_ok_cnt += 1
+                if store_mysql == True:##是否转存数据库
+                    new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status,
+                                              insert_state)
+                    insert_list.append(new_record)
             except Exception, e:
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
                 logger.error(traceback.format_exc())
+
+            if store_mysql == True:
+                db_session.add_all(insert_list)
+                db_session.commit()
+                del insert_list[:]
         return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt
 
     def reset_redis_data(self):
@@ -278,7 +316,7 @@ class DataStorage:
 
 ##975418个不同的商标，12277622
 if __name__=="__main__":
-    data_storage = DataStorage(clean_out=True)
+    data_storage = DataStorage(clean_out=True, store_mysql=True)
 
 
 
