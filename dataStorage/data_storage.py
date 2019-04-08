@@ -178,9 +178,9 @@ class DataStorage:
 
                 ##解析数据行的商标名，是图形或者空就跳过
                 brand_name = info_data[u"商标名称"][line]
-                brand_name = brand_name.strip()
-                if brand_name == u"图形" or pd.isna(brand_name) or len(brand_name) == 0:  # 商标名是图形的其实是图形商标
+                if brand_name == u"图形" or pd.isna(brand_name) or len(brand_name.strip()) == 0:  # 商标名是图形的其实是图形商标
                     continue
+                brand_name = brand_name.strip()
 
                 ##用id，按大类聚合
                 ##检查大类里是否已经有了这个id
@@ -197,7 +197,7 @@ class DataStorage:
                 info_ok_cnt += 1
             except Exception, e:
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
-                traceback.format_exc()
+                logger.error(traceback.format_exc())
         return line_num, info_ok_cnt
 
     def reset_redis_data(self):
