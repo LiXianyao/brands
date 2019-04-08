@@ -109,8 +109,10 @@ class DataStorage:
         for class_no in range(1, 46):
             record_key = self.rank_key_prefix + str(class_no) + "::id"
             record_cnt_key = self.rank_key_prefix + str(class_no) + "::cnt"
-            set_size = int(self.redis_con.db.hlen(record_key))
-            cnt_set_size = int(self.redis_con.db.get(record_cnt_key))
+            set_size = self.redis_con.db.hlen(record_key)
+            set_size = int(set_size) if set_size else 0
+            cnt_set_size = self.redis_con.db.get(record_cnt_key)
+            cnt_set_size = int(cnt_set_size) if cnt_set_size else 0
 
             data_key = self.data_key_prefix + str(class_no) + "::*"
             data_key_set = self.redis_con.db.keys(data_key)
@@ -188,6 +190,8 @@ class DataStorage:
         for line in range(0, line_num):
             if line % batch == 0:
                 logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
+                ##批量插入
+                self.redis_con.pipe.execute()
                 if store_mysql == True:
                     db_session.add_all(insert_list)
                     db_session.commit()
@@ -241,6 +245,8 @@ class DataStorage:
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
                 logger.error(traceback.format_exc())
 
+            ##批量插入
+            self.redis_con.pipe.execute()
             if store_mysql == True:
                 db_session.add_all(insert_list)
                 db_session.commit()
@@ -297,8 +303,6 @@ class DataStorage:
         else:
             cnt_skip = 1
             logger.debug(u"出现不含中文、英文与数字的商标,或者只包含无法解析的字体/符号，商标名：brand %s ,line_no = %d"%(brand_name, line_no))
-        ##批量插入
-        self.redis_con.pipe.execute()
         return cnt_skip
 
     def load_brand_item(self):
@@ -316,7 +320,7 @@ class DataStorage:
 
 ##975418个不同的商标，12277622
 if __name__=="__main__":
-    data_storage = DataStorage(clean_out=True, store_mysql=True)
+    data_storage = DataStorage(clean_out=False, store_mysql=True)
 
 
 
