@@ -14,39 +14,7 @@ sys.setdefaultencoding("utf-8")
 sys.path.append('..')
 from brandInfo.csvReader import CsvReader
 from consoleLogger import logger
-from similarity import brand
-
-def load_brand_item():
-    item_list = BrandItem.query.all()
-    item_dict = {}
-    for item in item_list:
-        group_no = int(item.group_no)
-        item_name = item.item_name
-        item_no = item.item_no
-        class_no = int(item.class_no)
-        if group_no not in item_dict:
-            item_dict[group_no] = {"class_no": class_no}
-        item_dict[group_no][item_name] = item_no
-    #for item in item_dict[101]:
-    #    print item, item_dict[101][item]
-    #print item_dict.keys()
-    return item_dict
-
-###解析csv数据行中的小项列表json字符串
-def analysis_product_list(line):
-    product_list_head = len(line) - 5
-    product_list = line[product_list_head].replace("]\"", "]").replace("\"[", "[").replace("\"\"", "\"")
-    flag = True
-    product_list_array = []
-    while flag and product_list_head > 3:
-        try:
-            product_list_array = json.loads(product_list)
-            flag = False
-        except:
-            product_list_head -= 1
-            product_list = line[product_list_head].replace("]\"", "]").replace("\"[", "[").replace("\"\"", "\"") \
-                           + "," + product_list
-    return flag, product_list_head, product_list_array
+from similarity import strFunction
 
 class DataStorage:
     date_origin_format = "%Y-%m-%d %H:%M:%S"
@@ -64,6 +32,7 @@ class DataStorage:
     def __init__(self, clean_out=False):
         self.redis_con = RedisConnection()
         self.csv_reader = CsvReader()
+        self.item_dict = self.load_brand_item()
         if clean_out:
             logger.info(u"数据库重置开启，开始清洗数据库")
             self.reset_redis_data()
@@ -103,8 +72,6 @@ class DataStorage:
         unzip_dir_name = zip_file_name.split(".zip")[0]
         os.system("unzip " + zip_file_name.encode("utf8") + " -d " + unzip_dir_name.encode("utf8"))
 
-        item_dict = load_brand_item()
-
         info_csv_name = unzip_dir_name + '/' + self.info_csv_name
         item_csv_name = unzip_dir_name + '/' + self.item_csv_name
         info_load_state, info_data = self.csv_reader.load_csv_to_pandas(info_csv_name)
@@ -115,14 +82,16 @@ class DataStorage:
         else:
             logger.info(u"压缩包%s中数据文件解析成功，开始导入Redis数据库" % (zip_file_name.encode("utf8")))
 
-            # self.redis_con.pipe.sadd(self.item_key_prefix + str(class_no) + "::" + str(b_id), product_no)
             logger.info(u"开始导入csv文件:%s... ..." % info_csv_name)
             line_num, info_ok_cnt = self.process_info_csv(info_data)
             logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d" % (info_csv_name, line_num, info_ok_cnt))
 
-            logger.info(u"开始导入csv文件:%s... ..." % info_csv_name)
-            line_num, info_ok_cnt = self.process_info_csv(info_data)
-            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d" % (info_csv_name, line_num, info_ok_cnt))
+            logger.info(u"开始导入csv文件:%s... ..." % item_csv_name)
+            line_num, item_ok_cnt = self.process_info_csv(item_data)
+            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d" % (item_csv_name, line_num, item_ok_cnt))
+
+            logger.info(u"压缩包%s中的信息已导入完毕，导入后的数据分布为：")
+            self.key_statistic()
 
 
 
@@ -144,7 +113,46 @@ class DataStorage:
             item_key = self.item_key_prefix + str(class_no) + "::*"
             item_key_set = self.redis_con.db.keys(item_key)
             set_item_size = len(item_key_set)
-            print "key %s has %d keys, while key %s has %d" % (record_key, set_size, item_key, set_item_size)
+            logger.info(u"第 %d 大类总计有 %d 个不同的注册号（计数量%d), "
+                        u"对应的数据存储量%d, 商品项表%d"
+                        % (class_no, set_size, cnt_set_size, set_data_size, set_item_size))
+
+    u"""
+    处理商品服务信息的函数
+    """
+    def process_item_csv(self, item_data):
+        ##先处理基本信息
+        line_num = item_data.shape[0]  ##csv总行数
+        item_ok_cnt = 0
+        for line in range(0, line_num):
+            ###解析csv字段，并确定数据行的可用性
+            ###解析数据行，检查取值
+            brand_no = item_data[u"注册号/申请号"][line]
+            group_no = item_data[u"类似群"][line]
+            class_no = item_data[u"国际分类"][line]
+            item_name = item_data[u"商标中文名称"][line]
+
+            ##无效数据跳过
+            if int(class_no) not in range(1,46):
+                logger.debug(u"第%d行数据解析无效，已跳过，原因：国际分类编码不在区间内"%line)
+                continue
+            if pd.isna(group_no) or len(group_no) != 4:
+                logger.debug(u"第%d行数据解析无效，已跳过，原因：类似群号为空或不在范围内"%line)
+                continue
+            try:
+                product_no = self.item_dict[group_no][item_name]
+            except:
+                logger.debug(u"第%d行数据解析无效，已跳过，原因：商品中文名称%s不在尼斯文件规定的商品项内" % (line, str(item_name)))
+                continue
+
+            ##取到这个注册号的bid
+            hset_id_key = self.rank_key_prefix + class_no + "::id"
+            b_id = self.redis_con.db.hget(hset_id_key, brand_no)
+            if not b_id:
+                continue
+            self.redis_con.pipe.sadd(self.item_key_prefix + str(class_no) + "::" + str(b_id), product_no)
+        self.redis_con.pipe.execute()
+        return line_num, item_ok_cnt
 
     u"""
     处理基本信息的函数
@@ -174,16 +182,15 @@ class DataStorage:
                 if brand_name == u"图形" or pd.isna(brand_name) or len(brand_name) == 0:  # 商标名是图形的其实是图形商标
                     continue
 
-                ##用商标名+id，按大类聚合
-                ##检查大类里是否已经有了这个id+商标名组合
+                ##用id，按大类聚合
+                ##检查大类里是否已经有了这个id
                 hset_id_key = self.rank_key_prefix + class_no + "::id"
                 hset_cnt_key = self.rank_key_prefix + class_no + "::cnt"
-                bkey = brand_no + "," + brand_name
-                if not self.redis_con.db.hget(hset_id_key, bkey):
+                if not self.redis_con.db.hget(hset_id_key, brand_no):
                     ###只有不在集合里，才生成并更新
                     ##将他先加入某个大类，分配一个id，然后还要存储它的数据、构造读音集合等
                     b_id = self.redis_con.db.incr(hset_cnt_key)
-                    self.redis_con.db.hset(hset_id_key, bkey, b_id)
+                    self.redis_con.db.hset(hset_id_key, brand_no, b_id)
                     info_ok_cnt += 1
                     self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line)
 
@@ -203,9 +210,9 @@ class DataStorage:
     ###在redis数据库中增加一个新商标的相关数据
     def add_new_brand(self, brand_name, brand_no, brand_status, apply_date, class_no, b_id, line_no):
         ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
-        brand_china = brand.get_china_str(brand_name)
+        brand_china = strFunction.get_china_str(brand_name)
         brand_pinyin = lazy_pinyin(brand_china, style=Style.TONE3)
-        brand_num, brand_eng = brand.get_not_china_list(brand_name)
+        brand_num, brand_eng, brand_letters = strFunction.get_not_china_list(brand_name)
 
         record_dict = {
             "bid": b_id,
@@ -219,7 +226,7 @@ class DataStorage:
             "date": apply_date
         }
         ###存储数据
-        data_key = self.data_key_prefix + str(class_no) + "::" + str(b_setid)
+        data_key = self.data_key_prefix + str(class_no) + "::" + str(b_id)
         #print data_key
         #print record_dict
         self.redis_con.pipe.hmset(data_key, record_dict)
@@ -227,10 +234,11 @@ class DataStorage:
         ###存储拼音/英文字集合
         brand_py_unit = []
         brand_py_unit.extend(brand_pinyin)
-        brand_py_unit.extend(brand_eng)
+        #brand_py_unit.extend(brand_eng)
+        brand_py_unit.extend(brand_letters)
         brand_py_unit.extend(brand_num)
         if len(brand_py_unit) > 0:
-            ##构造1~3元组合
+            ##构造1~2元组合（不然单字的时候就查不到了）
             for combi_low in range(1, 3):
                 combi_set = combinations(brand_py_unit, combi_low)
                 ###对每种组合都存一个集合
@@ -243,12 +251,23 @@ class DataStorage:
         ##批量插入
         self.redis_con.pipe.execute()
 
+    def load_brand_item(self):
+        item_list = BrandItem.query.all()
+        item_dict = {}
+        for item in item_list:
+            group_no = int(item.group_no)
+            item_name = item.item_name
+            item_no = item.item_no
+            class_no = int(item.class_no)
+            if group_no not in item_dict:
+                item_dict[group_no] = {"class_no": class_no}
+            item_dict[group_no][item_name] = item_no
+        return item_dict
 
 ##975418个不同的商标，12277622
 if __name__=="__main__":
     data_storage = DataStorage(clean_out=True)
-    #form_brand_record_redis()
-    #load_brand_item()
+
 
 
 
