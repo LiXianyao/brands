@@ -7,11 +7,11 @@ from pypinyin import lazy_pinyin, Style
 from itertools import combinations
 import datetime
 import trans_pre_data
-from similarity import brand
+from similarity import brand, strFunction
 import  traceback
 sys.path.append("..")
 reload(sys)
-sys.setdefaultencoding( "utf-8" )
+sys.setdefaultencoding("utf-8")
 
 ###redis数据库 的前缀
 data_key_prefix = "bData::"
@@ -39,9 +39,9 @@ def load_brand_item():
 ###redis数据库
 def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     brand_name = input_json["name"]
-    brand_name_china = brand.get_china_str(brand_name)
+    brand_name_china = strFunction.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china, style=Style.TONE3)
-    brand_name_num , brand_name_eng = brand.get_not_china_list(brand_name)
+    brand_name_num , brand_name_eng = strFunction.get_not_china_list(brand_name)
     brand_name_pinyin.extend(brand_name_eng)
     class_no_set = input_json["categories"]
     logger.debug("brand name is %s, with searching class: %s"%(brand_name,str(class_no_set)))
@@ -66,7 +66,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 #共有拼音排列组合
                 union = set()
                 for combi in py_combi:
-                    if len(combi)  == 1:
+                    if len(combi) == 1:
                         inter = db.smembers(pyset_key_prefix + str(class_no) + "::" + combi[0])
                         #s = combi[0]
                     else:
@@ -161,16 +161,16 @@ def get_pycombi(db, combi, class_no):
     inter_args = []
     combi_len = len(combi)
     first_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[0], combi[1]])
-    combi_str= combi[0] + "," + combi[1]
+    combi_str = combi[0] + "," + combi[1]
 
     for i in range(1, combi_len/2):
         set_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[i * 2], combi[i * 2 + 1]])
-        combi_str+= combi[i * 2] + "," + combi[i * 2 + 1]
+        combi_str += combi[i * 2] + "," + combi[i * 2 + 1]
         inter_args.append(set_key)
 
     if combi_len % 2 == 1:##奇数个读音
-        set_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[0] , combi[-1]])
-        combi_str+= combi[-1]
+        set_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[0], combi[-1]])
+        combi_str += combi[-1]
         inter_args.append(set_key)
 
     inter = db.sinter(first_key, *tuple(inter_args))
