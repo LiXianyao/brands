@@ -70,7 +70,7 @@ class DataStorage:
     ####record表存到redis中
     def form_brand_record_redis(self, zip_file_name):
         unzip_dir_name = zip_file_name.split(".zip")[0]
-        os.system("unzip " + zip_file_name.encode("utf8") + " -d " + unzip_dir_name.encode("utf8"))
+        os.system("unzip -o " + zip_file_name.encode("utf8") + " -d  " + unzip_dir_name.encode("utf8"))
 
         info_csv_name = unzip_dir_name + '/' + self.info_csv_name
         item_csv_name = unzip_dir_name + '/' + self.item_csv_name
