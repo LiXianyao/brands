@@ -42,7 +42,9 @@ class CsvReader:
          cat  注册商标基本信息.csv| sed ':a;N;$!ba;s/\r\n//g' | sed 's/\r//g'  > check.csv
         """
         clean_name = csv_name.replace(".csv", ".rm")
-        command = "cat " + csv_name + "| sed ':a;N;$!ba;s/\\r\\n//g' | sed 's/\\r//g'  >" + clean_name
+        command = "cat " + csv_name + "| sed ':a;N;$!ba;s/\\r\\n//g' | sed 's/\\r//g' | " \
+                                       "sed 's/" + u"（".encode("utf8") + "/(/g' | sed 's/" + \
+                                        u"）".encode("utf8") + "/)/g'>" + clean_name
         os.system(command)
         logger.info(u"字符\\r与\\r\\n消除完毕！")
         return clean_name
@@ -103,5 +105,5 @@ class CsvReader:
 if __name__=="__main__":
     ##u"注册商标商品服务信息.csv"
     reader = CsvReader()
-    print reader.load_csv_to_pandas(csv_name=u"注册商标基本信息.csv")
+    #print reader.load_csv_to_pandas(csv_name=u"注册商标基本信息.csv")
     print reader.load_csv_to_pandas(csv_name=u"注册商标商品服务信息.csv")
