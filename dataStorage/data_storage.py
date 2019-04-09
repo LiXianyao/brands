@@ -230,10 +230,11 @@ class DataStorage:
                         ##将他先加入某个大类，分配一个id，然后还要存储它的数据、构造读音集合等
                         b_id = self.redis_con.db.incr(hset_cnt_key)
                         self.redis_con.db.hset(hset_id_key, brand_no, b_id)
-                        info_ok_cnt += 1
                         if self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line):
                             info_skip_cnt += 1
                             insert_state = 3
+                        else:
+                            info_ok_cnt += 1
                     else: ###重复的，只考虑更新专用期
                         info_unique_cnt += 1
                         insert_state = 4
