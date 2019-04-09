@@ -236,11 +236,22 @@ class DataStorage:
                             insert_state = 3
                     else: ###重复的，只考虑更新专用期
                         info_unique_cnt += 1
+                        insert_state = 4
 
                 if store_mysql == True:##是否转存数据库
-                    new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status,
+                    if insert_state == 4:#更新
+                        update_record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
+                        if update_record:
+                            update_record.brand_status = brand_status
+                            update_record.apply_date = apply_date
+                        else:
+                            update_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status,
                                               insert_state)
-                    insert_list.append(new_record)
+                        insert_list.append(update_record)
+                    else:
+                        new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status,
+                                              insert_state)
+                        insert_list.append(new_record)
             except Exception, e:
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
                 logger.error(traceback.format_exc())

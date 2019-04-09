@@ -47,7 +47,9 @@ class BrandHistory(Base):
         return str(brand_dict)
 
 if __name__=="__main__":
+
     add_list = []
+    """
     new_record = BrandHistory('34738019', u"图形", "20181116", 13, 0, 1)
     add_list.append(new_record)
     new_record = BrandHistory('34738019', u"图形", "20181116", 13, 0, 1)
@@ -56,5 +58,11 @@ if __name__=="__main__":
     add_list.append(new_record)
     new_record = BrandHistory('34738019', u"图形", "20181116", 13, 0, 1)
     add_list.append(new_record)
+    db_session.add_all(add_list)
+    db_session.commit()"""
+    brand_no = "1"
+    update_record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
+    update_record.brand_status = 1
+    add_list.append(update_record)
     db_session.add_all(add_list)
     db_session.commit()
