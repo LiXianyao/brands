@@ -49,7 +49,7 @@ def split_not_china(_str):
 
 #获得商标名中的英文（列表形式）
 def get_not_china_list(_str):
-    split_list = re.findall(u"[a-zA-Z][a-z]*|[A-Z][A-Z]*|[0-9]+", _str)
+    split_list = re.findall(u"[a-zA-Z][a-z]+|[A-Z][A-Z]*|[a-z]|[0-9]+", _str)
     num_list = []
     eng_list = []
     character_set = set()
