@@ -8,7 +8,7 @@ class BrandHistory(Base):
     #表结构
     id = Column(Integer, primary_key=True, autoincrement=True)
     brand_no = Column(String(10))
-    brand_name = Column(String(128))
+    brand_name = Column(String(1024))
     apply_date = Column(String(8))
     class_no = Column(Integer, nullable=False)
     brand_status = Column(Integer, nullable=True)
