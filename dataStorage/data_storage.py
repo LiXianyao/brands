@@ -41,6 +41,7 @@ class DataStorage:
         with open("storageFileNames.txt", "r") as names_file:
             proccess_files = names_file.readlines()
             for file in proccess_files:
+                file = file.strip()
                 #每个压缩包处理：1、解压； 2、读取其中的对应两个csv，并进行处理
                 file_path = self.info_dict + file
                 if not os.path.exists(file_path):
