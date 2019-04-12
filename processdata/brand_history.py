@@ -7,7 +7,7 @@ class BrandHistory(Base):
     __tablename__ ='brand_history'
     #表结构
     id = Column(Integer, primary_key=True, autoincrement=True)
-    brand_no = Column(String(10))
+    brand_no = Column(String(15))
     brand_name = Column(String(1024))
     apply_date = Column(String(8))
     class_no = Column(Integer, nullable=False)

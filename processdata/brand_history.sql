@@ -2,7 +2,7 @@ create table brand_history
 (
   id            int auto_increment
     primary key,
-  brand_no      varchar(10)   null,
+  brand_no      varchar(15)   null,
   class_no      int(2)        null,
   apply_date    varchar(8)    null,
   brand_name    varchar(1024) null,
