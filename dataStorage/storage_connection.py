@@ -35,7 +35,7 @@ class RedisConnection:
             print "class %d has pyset size %d"%(class_no, len(old_data))
 
             for key in old_data:
-                if len(key.split(",") > 1):
+                if len(key.split(",")) > 1:
                     self.pipe.delete(key)
             self.pipe.execute()
             del old_data[:]

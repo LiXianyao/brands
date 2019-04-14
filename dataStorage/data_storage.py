@@ -188,7 +188,10 @@ class DataStorage:
         info_unique_cnt = 0
         batch = 100000
         insert_list = []
+        old = 3200000
         for line in range(0, line_num):
+            if line < old:
+                continue
             if line % batch == 0:
                 logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
                 ##批量插入
@@ -305,14 +308,11 @@ class DataStorage:
         brand_py_unit.extend(brand_letters)
         brand_py_unit.extend(brand_num)
         if len(brand_py_unit) > 0:
-            ##构造1~2元组合（不然单字的时候就查不到了）
-            for combi_low in range(1, 3):
-                combi_set = combinations(brand_py_unit, combi_low)
-                ###对每种组合都存一个集合
-                for combi in combi_set:
-                    set_key = self.py_key_prefix + str(class_no) + "::" + ','.join(combi) ##key = "bPySet::1::ni2,hao3" ,类似这样的
-                    #print set_key
-                    self.redis_con.pipe.sadd(set_key, b_id)
+            ###对每个单字都存一个集合
+            for py in brand_py_unit:
+                set_key = self.py_key_prefix + str(class_no) + "::" + py ##key = "bPySet::1::ni2" ,类似这样的
+                #print set_key
+                self.redis_con.pipe.sadd(set_key, b_id)
         else:
             cnt_skip = 1
             logger.debug(u"出现不含中文、英文与数字的商标,或者只包含无法解析的字体/符号，商标名：brand %s ,line_no = %d"%(brand_name, line_no))
