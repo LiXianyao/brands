@@ -140,6 +140,7 @@ class DataStorage:
         batch = 500000
         for line in range(0, line_num):
             if line % batch == 0:
+                self.redis_con.pipe.execute()
                 logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
             ###解析csv字段，并确定数据行的可用性
             ###解析数据行，检查取值
@@ -188,7 +189,7 @@ class DataStorage:
         info_unique_cnt = 0
         batch = 100000
         insert_list = []
-        old = 3200000
+        old = 0
         for line in range(0, line_num):
             if line < old:
                 continue
