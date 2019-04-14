@@ -260,6 +260,12 @@ class DataStorage:
             except Exception, e:
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
                 logger.error(traceback.format_exc())
+                try:
+                    test_redis = self.redis_con.db.get(self.rank_key_prefix + "1::id")
+                except:
+                    logger.error(u"reids数据库崩溃，不可继续存储，请检查内存空间是否足够")
+                    logger.error(traceback.format_exc())
+                    break
 
             ##批量插入
             self.redis_con.pipe.execute()
