@@ -29,6 +29,21 @@ class RedisConnection:
         logger.info("delete keys of prefix '%s' with num: %d" % (prefix, len(old_data)))
         del old_data[:]
 
+    def clear_redis_key_multi(self):
+        for class_no in range(1,2):
+            old_data = self.db.keys("bPySet::" + str(class_no) + "::*,*")
+            print "class %d has pyset size %d"%(class_no, len(old_data))
+
+            for key in old_data:
+                if len(key.split(",") > 1):
+                    self.pipe.delete(key)
+            self.pipe.execute()
+            del old_data[:]
+            old_data = self.db.keys("bPySet::" + str(class_no) + "::*,*")
+            print "after clean, class %d has pyset size %d" % (class_no, len(old_data))
+            print old_data
+            del old_data[:]
+
 
 if __name__=="__main__":
     con = RedisConnection()
