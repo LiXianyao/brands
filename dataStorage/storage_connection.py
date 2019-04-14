@@ -47,8 +47,5 @@ class RedisConnection:
 
 if __name__=="__main__":
     con = RedisConnection()
-    print con.db.hget("b", "c")
-    print con.db.hset("b", "d", "1")
-    print con.db.hget("b", "c")
-    con.db.delete("b")
+    con.clear_redis_key_multi()
 
