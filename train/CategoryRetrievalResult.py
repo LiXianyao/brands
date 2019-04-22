@@ -10,3 +10,15 @@ class CategoryRetrievalResult(object):
 
     def countSimilarName(self):
         return {self.category : len(self.similarName)}
+
+    def getNameListLen(self):
+        if self.similarName:
+            return len(self.similarName)
+        else:
+            return 0
+
+    def getCategory(self):
+        return self.category
+
+    def getInfo(self):
+        return self.getCategory(), self.getNameListLen()

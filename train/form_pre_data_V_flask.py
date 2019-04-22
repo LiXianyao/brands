@@ -1,14 +1,11 @@
 #-*-coding:utf8-*-#
 import sys
-import  ConfigParser
-import redis
 import os
 from pypinyin import lazy_pinyin, Style
 from itertools import combinations
 import datetime
 import trans_pre_data
 from similarity import brand, strFunction
-import  traceback
 sys.path.append("..")
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -51,7 +48,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C',0.8,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
+    gate = ['C',0.67,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
 
     similar_cnt = {k: v for k, v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
     last_class = {k: v for k, v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
@@ -137,6 +134,8 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
         reload(trans_pre_data)
         itemList = getItemListOfBrand(return_list, item_dict, _pipe)  ###查同音商标名注册的商品项
         return_list = trans_pre_data.trans_pre_data_web(return_list, itemList, class_no_set, item_dict=item_dict)
+        for categoryResult in return_list:
+            logger.debug(u"类别 %d 有 %d 条近似商标名" % (categoryResult.getInfo()))
     except:
         error_occur = True
         logger.error(u"特征值预测分类或构造返回结果时发生异常!!", exc_info=True)
