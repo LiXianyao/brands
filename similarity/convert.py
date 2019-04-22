@@ -38,7 +38,7 @@ def pinyin2(_str1,_str2):
         _str2 = ' '.join(lazy_pinyin(_str2))
 
     if _str1 == _str2:
-        return 8, u"声音相同字不同 8"     #声音相同字不同
+        return 9, u"声音相同字不同 8"     #声音相同字不同
     _str1 = _str1.split(" ")
     _str2 = _str2.split(" ")
 
@@ -46,10 +46,10 @@ def pinyin2(_str1,_str2):
     ##输入名字被完全包含的情况：
     if lstr1 == maxNum:  #好中华 中华 名字前加字
         if s2_p == lstr2:
-            return 9, u"声音相同字不同前面加字 9"   #名字前加字
+            return 10, u"声音相同字不同前面加字 9"   #名字前加字
 
         if s2_p == s1_p:   #中华好 中华 名字后加字
-            return 10, u"声音相同字不同后面加字 10"  # 名字后加字
+            return 11, u"声音相同字不同后面加字 10"  # 名字后加字
         ##剩余情况为：输入名字是近似商标的一部分
         return 12, u"名字的一部分声音相同字不同 12" #名字的一部分
     else: ##输入商标只有部分适配
@@ -92,13 +92,13 @@ def result(_str1,_str2,lable):
     if _str1 == _str2:
         return 1, u"名字完全相同 1"
     elif lable == "汉字字形相似度":
-        return 11, u"字形相近 11"
+        return 8, u"字形相近 8"
     elif lable == "拼音相似度":
         return pinyin2(_str1,_str2)
     elif lable == "汉字包含被包含":
         return contain(_str1,_str2)
     else:
-        return 12, lable + u" 12"
+        return 16, lable + u" 16"
 
 if __name__ == "__main__":
     print "%s"% result(u"中华", u"中华好", "拼音相似度")[1]
