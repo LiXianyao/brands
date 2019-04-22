@@ -9,7 +9,8 @@ import traceback
 from train import form_pre_data_V_flask
 from RetrievalResponse import BrandSimilarRetrievalResponse, RetrievalResponse
 import check_data
-from logger import  logger
+from logger import logger
+from dataStorage.storage_connection import RedisConnection
 
 """##########################################由进程池子进程执行的函数们########################################################"""
 ###子进程重载分析函数的模块
@@ -27,11 +28,9 @@ def remove_file(id):
 
 """单个进程处理响应请求"""
 def get_request(process_id, process_share_dict, input_json, item_dict = None):
-    global logger
     input_json["categories"] = input_json["categories"][process_id]
     reload(form_pre_data_V_flask)
     ###redis连接
-    from dataStorage.storage_connection import RedisConnection
     connection = RedisConnection()
     fix_con = connection.db
     _pipe = connection.pipe
@@ -71,12 +70,13 @@ data_per_process = int(cf.get("multiProcess","data_per_process"))
 
 try:
     from multiprocessing import Pool, Manager
-    print "setup process,", os.getpid()
+
+    logger.INFO(u"服务启动中... ...主进程号%s" % os.getpid())
     processManager = Manager()
     item_dict = form_pre_data_V_flask.load_brand_item()
-    print u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《=================" % (os.getpid())
+    logger.INFO(u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《=================" % (os.getpid()))
     processPool = Pool(total_process_num)
-    print u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid())
+    logger.INFO(u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid()))
 except:
     logger.error("进程池初始化失败！！！！", exc_info=True)
 reload_sleep_time = 3
