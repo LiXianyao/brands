@@ -9,7 +9,7 @@ import traceback
 from train import form_pre_data_V_flask
 from RetrievalResponse import BrandSimilarRetrievalResponse, RetrievalResponse
 import check_data
-from logger import logger
+from logger import flask_logger
 from dataStorage.storage_connection import RedisConnection
 
 """##########################################由进程池子进程执行的函数们########################################################"""
@@ -17,14 +17,14 @@ from dataStorage.storage_connection import RedisConnection
 def reload_module(id):
     reload(form_pre_data_V_flask)
     time.sleep(reload_sleep_time)
-    logger.info("process %d reload success!"%os.getpid())
+    flask_logger.info("process %d reload success!"%os.getpid())
 
 ###子进程关闭进程池前清除临时文件的模块
 def remove_file(id):
     time.sleep(reload_sleep_time)
     input_file_name = str(os.getpid()) + "_input"
     os.system("rm " + "data/" + input_file_name)
-    logger.info("process %d remove input file success!" % os.getpid())
+    flask_logger.info("process %d remove input file success!" % os.getpid())
 
 """单个进程处理响应请求"""
 def get_request(process_id, process_share_dict, input_json, item_dict = None):
@@ -36,12 +36,12 @@ def get_request(process_id, process_share_dict, input_json, item_dict = None):
     _pipe = connection.pipe
     ##调用函数
     try:
-        error_occur, query_res = form_pre_data_V_flask.form_pre_data_flask(input_json, item_dict, fix_con, _pipe, logger)
+        error_occur, query_res = form_pre_data_V_flask.form_pre_data_flask(input_json, item_dict, fix_con, _pipe, flask_logger)
         for class_no in input_json["categories"]:
             process_share_dict[class_no] = query_res[class_no]
     except:
         error_occur = True
-        logger.error("调用检索函数时发生异常!!", exc_info = True)
+        flask_logger.error("调用检索函数时发生异常!!", exc_info = True)
 
     if error_occur == True:
         process_share_dict["errorCode"] = "0"
@@ -71,14 +71,14 @@ data_per_process = int(cf.get("multiProcess","data_per_process"))
 try:
     from multiprocessing import Pool, Manager
 
-    logger.INFO(u"服务启动中... ...主进程号%s" % os.getpid())
+    flask_logger.INFO(u"服务启动中... ...主进程号%s" % os.getpid())
     processManager = Manager()
     item_dict = form_pre_data_V_flask.load_brand_item()
-    logger.INFO(u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《=================" % (os.getpid()))
+    flask_logger.INFO(u"==========》》进程%d 读取小项列表完成!  下一项：创建进程池！《《=================" % (os.getpid()))
     processPool = Pool(total_process_num)
-    logger.INFO(u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid()))
+    flask_logger.INFO(u"==========》》进程%d 进程池创建完成!  服务进程初始化完成！！《《=================" % (os.getpid()))
 except:
-    logger.error("进程池初始化失败！！！！", exc_info=True)
+    flask_logger.error("进程池初始化失败！！！！", exc_info=True)
 reload_sleep_time = 3
 setup_flag = True
 
@@ -125,7 +125,7 @@ def predict(input_json, process_num):
         process_share = processManager.dict()
         running_process = []
         execute_process_num = check_data.divided_categories(process_num, input_json, data_per_process)  ##划分查询的类别
-        logger.info("new process num  =%d, divided categories =%s"%(execute_process_num, str(input_json["categories"])) )
+        flask_logger.info("new process num  =%d, divided categories =%s"%(execute_process_num, str(input_json["categories"])) )
         for i in range(execute_process_num):
             running_process.append(processPool.apply_async(get_request, args=(i, process_share, input_json, item_dict)))
 
@@ -135,7 +135,7 @@ def predict(input_json, process_num):
             print "process end"
         end_time_c = datetime.datetime.now()
         cost_time_c = (end_time_c - start_time_c).total_seconds()
-        logger.info(u"查询总耗时为 %s秒"%str(cost_time_c) )
+        flask_logger.info(u"查询总耗时为 %s秒"%str(cost_time_c) )
 
         ##将结果封装到实体类，转化为Json字符串
         process_share_dict = dict(process_share)
@@ -150,7 +150,7 @@ def predict(input_json, process_num):
         del running_process[:]
     except Exception, e:
         failed_Res = traceback.format_exc()
-        logger.error("调用多进程处理时发生异常!!", exc_info=True)
+        flask_logger.error("调用多进程处理时发生异常!!", exc_info=True)
         # 把抛出的异常返回回去
         responseEntity = BrandSimilarRetrievalResponse(brandName=input_json["name"],
                                                        retrievalResult=[],
@@ -170,10 +170,10 @@ def reloadPrediction():
                 processPool.apply_async(reload_module, args=(i,)))
         for process in running_process:
             process.wait()
-        logger.info("prediction 模块重置成功！,pid=%d"%(os.getpid()) )
+        flask_logger.info("prediction 模块重置成功！,pid=%d"%(os.getpid()) )
         response = RetrievalResponse(resultCode="1", message="prediction 模块重置成功！,pid=%d"%(os.getpid()))
     except:
-        logger.error("重置prediction模块时发生异常!!", exc_info=True)
+        flask_logger.error("重置prediction模块时发生异常!!", exc_info=True)
         response = RetrievalResponse(resultCode= "0", message= "prediction 模块重置失败！！检查日志,pid=%d"%(os.getpid()))
     return form_response(response)
 
@@ -192,10 +192,10 @@ def shutdownProcess():
             del processPool
             processManager = None
             processPool = None
-            logger.info("==============>>子进程池关闭成功，可以直接结束服务进程,pid = %d<<========================="%(os.getpid()))
+            flask_logger.info("==============>>子进程池关闭成功，可以直接结束服务进程,pid = %d<<========================="%(os.getpid()))
             response = RetrievalResponse(resultCode="1", message="子进程池关闭成功，可以直接结束服务进程！,pid=%d"%(os.getpid()) )
     except:
-        logger.error("关闭子进程池时发生异常!!", exc_info=True)
+        flask_logger.error("关闭子进程池时发生异常!!", exc_info=True)
         response = RetrievalResponse(resultCode= "0", message= "子进程池关闭失败！！检查日志,pid=%d"%(os.getpid()) )
     return form_response(response)
 
@@ -203,14 +203,13 @@ def shutdownProcess():
 ###只会改变执行时，每次请求使用多少进程，每个进程处理多少数据，改变进程数需要另外的
 @app.route('/updateConfigure', methods=['POST'])
 def updateConfigure():
-    global logger
     try:
         loadConfiguration()
         response_msg  =  "配置参数重置成功！！！pid=%d"%(os.getpid())
-        logger.info("配置参数重置成功！！！pid=%d"%(os.getpid()))
+        flask_logger.info("配置参数重置成功！！！pid=%d"%(os.getpid()))
         response = RetrievalResponse(resultCode= "1", message=response_msg)
     except:
-        logger.error("更新配置参数时发生异常!! pid=%d"%(os.getpid()), exc_info=True)
+        flask_logger.error("更新配置参数时发生异常!! pid=%d"%(os.getpid()), exc_info=True)
         response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
     return form_response(response)
 
@@ -219,25 +218,23 @@ def updateConfigure():
 ###主要是测试初始化进程池是否完毕
 @app.route('/testUsage', methods=['POST'])
 def testUsage():
-    global logger
     global setup_flag, processPool, processManager
     if setup_flag == False:##关闭原来的进程池
         response_msg = "服务进程初始化未结束，请稍作等待！！,pid=%d" % (os.getpid())
-        logger.info(response_msg)
+        flask_logger.info(response_msg)
         response = RetrievalResponse(resultCode="0", message=response_msg)
     elif processPool == None or processManager == None:
         response_msg = "服务进程初始化已结束，但进程池未启动，请尝试restProcessPool接口重置，或停止服务检查日志！！,pid=%d" % (os.getpid())
-        logger.error( response_msg )
+        flask_logger.error( response_msg )
         response = RetrievalResponse(resultCode= "0", message=response_msg)
     else:
         response_msg = "服务进程初始化正常结束，可以发送请求！,pid=%d" % (os.getpid())
-        logger.error(response_msg)
+        flask_logger.error(response_msg)
         response = RetrievalResponse(resultCode="1", message=response_msg)
     return form_response(response)
 
 @app.route('/resetProcessPool', methods=['POST'])
 def resetProcessPool():
-    global logger
     try:
         loadConfiguration()  ##重新载入配置
         global total_process_num, processPool, processManager
@@ -249,21 +246,20 @@ def resetProcessPool():
         if processManager == None:
             processManager = Manager()
         response_msg  =  "服务进程池重置成功！！,pid=%d"%(os.getpid())
-        logger.info( "服务进程池重置成功！！,pid=%d"%(os.getpid()) )
+        flask_logger.info( "服务进程池重置成功！！,pid=%d"%(os.getpid()) )
         response = RetrievalResponse(resultCode= "1", message=response_msg)
     except:
-        logger.error("重置进程的子进程池时发生异常!!", exc_info=True)
+        flask_logger.error("重置进程的子进程池时发生异常!!", exc_info=True)
         response = RetrievalResponse(resultCode= "0", message= traceback.format_exc())
     return form_response(response)
 
 ###响应实体类转为服务的json响应
 def form_response(responseEntity):
-    global logger
     try:
         res = json.dumps(responseEntity, default=lambda obj: obj.__dict__, sort_keys=True,
                          ensure_ascii=False)
     except:
-        logger.error("封装响应实体类时发生异常!!", exc_info=True)
+        flask_logger.error("封装响应实体类时发生异常!!", exc_info=True)
     resp = make_response(res)
     resp.mimetype = 'application/json'
     return resp
@@ -277,7 +273,7 @@ def loadConfiguration():
     coreItem_process_num = int(cf.get("multiProcess", "coreItem_process_num"))
     restItem_process_num = int(cf.get("multiProcess", "restItem_process_num"))
     data_per_process = int(cf.get("multiProcess", "data_per_process"))
-    logger.info(u"配置文件更新，总进程数=%d, 核心任务进程数=%d，非核心任务进程数=%d，进程最小处理类别数=%d"%(total_process_num, coreItem_process_num, restItem_process_num, data_per_process))
+    flask_logger.info(u"配置文件更新，总进程数=%d, 核心任务进程数=%d，非核心任务进程数=%d，进程最小处理类别数=%d"%(total_process_num, coreItem_process_num, restItem_process_num, data_per_process))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
