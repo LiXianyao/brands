@@ -268,11 +268,6 @@ def form_response(responseEntity):
 #setup()
 #threading.Timer(5, setup).start()
 
-class NonASCIIJsonEncoder(json.JSONEncoder):
-    def __init__(self, **kwargs):
-        kwargs['ensure_ascii'] = False
-        super(NonASCIIJsonEncoder, self).__init__(**kwargs)
-
 def loadConfiguration():
     global cf, total_process_num, data_per_process, coreItem_process_num, restItem_process_num
     cf.read("redis.config")
@@ -282,6 +277,5 @@ def loadConfiguration():
     data_per_process = int(cf.get("multiProcess", "data_per_process"))
     logger.info(u"配置文件更新，总进程数=%d, 核心任务进程数=%d，非核心任务进程数=%d，进程最小处理类别数=%d"%(total_process_num, coreItem_process_num, restItem_process_num, data_per_process))
 
-app.json_encoder = NonASCIIJsonEncoder
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

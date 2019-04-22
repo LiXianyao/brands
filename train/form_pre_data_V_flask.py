@@ -41,7 +41,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     brand_name = input_json["name"]
     brand_name_china = strFunction.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china, style=Style.TONE3)
-    brand_name_num , brand_name_eng = strFunction.get_not_china_list(brand_name)
+    brand_name_num , brand_name_eng, character_set = strFunction.get_not_china_list(brand_name)
     brand_name_pinyin.extend(brand_name_eng)
     class_no_set = input_json["categories"]
     logger.debug("brand name is %s, with searching class: %s" % (brand_name, str(class_no_set)))
