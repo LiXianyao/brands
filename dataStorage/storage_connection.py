@@ -30,7 +30,7 @@ class RedisConnection:
         del old_data[:]
 
     def clear_redis_key_multi(self):
-        for class_no in range(1,2):
+        for class_no in range(1, 46):
             old_data = self.db.keys("bPySet::" + str(class_no) + "::*,*")
             print "class %d has pyset size %d"%(class_no, len(old_data))
 
@@ -44,8 +44,17 @@ class RedisConnection:
             print old_data
             del old_data[:]
 
+    def count_brand_no(self):
+        brand_no_sum = 0
+        for class_no in range(1, 46):
+            brand_cnt = self.db.get("bRank::" + str(class_no) + "::cnt")
+            print "class %d has brand no size %s" % (class_no, brand_cnt)
+            brand_no_sum += int(brand_cnt)
+        print "brand no intotal with %d" % brand_no_sum
+
 
 if __name__=="__main__":
     con = RedisConnection()
-    con.clear_redis_key_multi()
+    #con.clear_redis_key_multi()
+    con.count_brand_no()
 

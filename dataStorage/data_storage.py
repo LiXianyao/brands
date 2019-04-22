@@ -84,11 +84,11 @@ class DataStorage:
             logger.info(u"压缩包%s中数据文件解析成功，开始导入Redis数据库" % (zip_file_name.encode("utf8")))
 
             logger.info(u"开始导入csv文件:%s... ..." % info_csv_name)
-            line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt \
+            line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt \
                 = self.process_info_csv(info_data, store_mysql)
             logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d，"
-                        u"数据行不合法%d行，图形商标或无名字商标%d行，重复的注册号%d" %
-                        (info_csv_name, line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt))
+                        u"数据行不合法%d行，图形商标或无名字商标%d行，重复的注册号%d, 插入数据出错%d行" %
+                        (info_csv_name, line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt))
 
             logger.info(u"开始导入csv文件:%s... ..." % item_csv_name)
             line_num, item_ok_cnt, item_invalid_class_cnt, item_invalid_group_cnt, item_invalid_product_cnt\
@@ -187,6 +187,7 @@ class DataStorage:
         info_invalid_cnt = 0
         info_skip_cnt = 0
         info_unique_cnt = 0
+        info_error_cnt = 0
         batch = 100000
         insert_list = []
         old = 0
@@ -198,6 +199,7 @@ class DataStorage:
                 ##批量插入
                 self.redis_con.pipe.execute()
                 if store_mysql == True:
+                    logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
                     db_session.add_all(insert_list)
                     db_session.commit()
                     del insert_list[:]
@@ -230,22 +232,26 @@ class DataStorage:
                     hset_id_key = self.rank_key_prefix + class_no + "::id"
                     hset_cnt_key = self.rank_key_prefix + class_no + "::cnt"
                     insert_state = 1
-                    if not self.redis_con.db.hget(hset_id_key, brand_no):
+                    b_id = self.redis_con.db.hget(hset_id_key, brand_no)
+                    if not b_id:
                         ###只有不在集合里，才生成并更新
                         ##将他先加入某个大类，分配一个id，然后还要存储它的数据、构造读音集合等
                         b_id = self.redis_con.db.incr(hset_cnt_key)
                         self.redis_con.db.hset(hset_id_key, brand_no, b_id)
+                    else: ###重复的，只考虑更新商标状态和日期
+                        info_unique_cnt += 1
+                        insert_state = 4
+
+                    if not self.redis_con.db.hget(self.data_key_prefix + str(class_no) + "::" + str(b_id), "bid"):
                         if self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line):
                             info_skip_cnt += 1
                             insert_state = 3
                         else:
                             info_ok_cnt += 1
-                    else: ###重复的，只考虑更新专用期
-                        info_unique_cnt += 1
-                        insert_state = 4
 
                 if store_mysql == True:##是否转存数据库
                     if insert_state == 4:#更新
+                        pass
                         update_record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
                         if update_record:
                             update_record.brand_status = brand_status
@@ -255,10 +261,13 @@ class DataStorage:
                                               insert_state)
                         insert_list.append(update_record)
                     else:
-                        new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status,
-                                              insert_state)
-                        insert_list.append(new_record)
+                        record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
+                        if not record:
+                            new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status
+                                                      , insert_state)
+                            insert_list.append(new_record)
             except Exception, e:
+                info_error_cnt += 1
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
                 logger.error(traceback.format_exc())
                 try:
@@ -274,7 +283,7 @@ class DataStorage:
                 db_session.add_all(insert_list)
                 db_session.commit()
                 del insert_list[:]
-        return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt
+        return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt
 
     def reset_redis_data(self):
         ##清理数据库原有的redis数据
