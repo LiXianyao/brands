@@ -1,8 +1,9 @@
 1、文件夹说明：
         |flask                  #目前所用的http服务器的代码所在文件夹
             |data               #商标相似度计算时产生的缓存文件
-
-        |processdata            #处理csv到数据库的代码，包含到redis的和到mysql的（mysql部分暂时废弃)
+        
+        |dataStorage            #处理csv到数据库的代码，redis连接的部分
+        |processdata            #处理csv到数据库的代码，mysql连接的部分
 
         |similarity             #学姐写的相似度特征值计算的代码
 
@@ -12,7 +13,7 @@
             |testRes            #存放模型训练代码里，测试集对每行数据的测试结果
 
 2、使用说明
-·包括训练、使用服务器测试，还有MQ挂载多进程处理响应请求（可能下周就是thrift了吧。。）
+·包括训练、使用服务器测试，还有多进程处理响应请求
 
         2、1）训练
             I、生成训练数据
@@ -52,7 +53,7 @@
                 修改好配置文件后，运行classify_xgboost_train.py脚本，等它跑完，会在train/testRes里有个csv是测试数据的对比结果
                         ，在train/models/里产生.model模型文件和.parameter使用的参数记录
 
-        2、2）flask在线后台
+        2、2）flask在线后台(未修改，还是旧版)
             ·只用了flask_server.py，服务调用的函数都在train/文件夹里，名字里带pre或者prediction的
                 直接运行flask_server.py，服务器的主要用处是将对redis中的商标，按所含字的拼音构成的集合驻留内存，节约测试的启动时间。
                 提供五个接口：
@@ -71,18 +72,7 @@
             ·根据gate (与构建训练数据时的解释相同)，筛选数据
             ·筛选后的特征数据依次调用trans_pre_data.py -> classify_xgboost_prediction.py，接受返回结果，构建结果字典
 
-        2、3）MQ多进程后台
-            ·涉及文件 MessageQueueMulti.py，
-            ·主要工作：通过python的multiprocessing模块，创建 i 个进程池，每个进程池有 j个进程， 每个进程再 读取 k个大类的数据。且 i * k >= 45
-                        每次收到新请求的时候，从每个进程池申请一个进程，处理它有的k个大类的数据，i个进程池（非阻塞地）申请完后，返回的结果就是所有大类的查询结果
-                        ==>比如假设有5个进程池，第1个进程池里的所有进程读取和处理（1~9）大类的数据，第2个进程池的处理（10~18）大类……以此类推。
-                            每个进程池具体有几个进程根据系统资源决定，但它同时也会决定多个 请求间 的并发程度。
-                            多个进程池、每个进程池处理几个大类的数据，这两点则决定了 单个请求内部 的并发程度
-                            i \ j \ k 对应配置文件 redis.config中[multiProcess] 项里的pool_num, process_num. 和 data_per_process
-                        类似在线后台的处理方式，收到的查询请求，每个子进程会调用train/form_pre_data_IV_flask.py 进行处理
-
-            ·目前通过脚本文件WriteMessage.py，向消息队列发送json结构字符串来控制，由json字符串里的"type"字段决定响应的动作：
-                        "type":"reload"时，所有进程池里的进程重载商标计算模块 train/form_pre_data_IV_flask.py
-                        "type":"predict"时，根据json中"text"的内容，调用各个进程池里的进程进行计算
-                        "type":"shutdown"时，关闭所有进程池，退出
-
+3、部署说明
+·需要安装的python环境包
+    ·可以直接pip 安装的：redis,flask, jieba, pypinyin, python-Levenshtein, synonyms
+    ·需要git下载编译安装：xgboost
