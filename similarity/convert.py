@@ -2,7 +2,8 @@
 
 import re
 from pypinyin import lazy_pinyin
-from brand import get_china_str, maxMatchLen
+from brand import maxMatchLen
+from strFunction import get_china_str
 
 def pinyin2(_str1,_str2):
     zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
