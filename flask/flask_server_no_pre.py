@@ -31,8 +31,10 @@ def get_request(process_id, process_share_dict, input_json, item_dict = None):
     input_json["categories"] = input_json["categories"][process_id]
     reload(form_pre_data_V_flask)
     ###redis连接
-    fix_con = redis.StrictRedis(host=redis_ip, port=redis_port, db=redis_db, password=redis_pwd)
-    _pipe = fix_con.pipeline()
+    from dataStorage.storage_connection import RedisConnection
+    connection = RedisConnection()
+    fix_con = connection.db
+    _pipe = connection.pipe
     ##调用函数
     try:
         error_occur, query_res = form_pre_data_V_flask.form_pre_data_flask(input_json, item_dict, fix_con, _pipe, logger)
