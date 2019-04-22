@@ -134,7 +134,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
         reload(trans_pre_data)
         itemList = getItemListOfBrand(return_list, item_dict, _pipe)  ###查同音商标名注册的商品项
         return_list = trans_pre_data.trans_pre_data_web(return_list, itemList, class_no_set, item_dict=item_dict)
-        for categoryResult in return_list:
+        for categoryResult in return_list.values():
             logger.debug(u"类别 %d 有 %d 条近似商标名" % (categoryResult.getInfo()))
     except:
         error_occur = True
