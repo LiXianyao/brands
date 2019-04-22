@@ -1,6 +1,9 @@
 # coding=utf8
 import re
 import jieba
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 
 # 判断是否为汉字字符串
