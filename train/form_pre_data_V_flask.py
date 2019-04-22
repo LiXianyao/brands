@@ -57,12 +57,14 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     return_list = []
     py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
     py_combi = combinations(brand_name_pinyin, py_low)
+    combi_store = set()
     try:
         for class_no in class_no_set:
             if py_low > 0:
                 #共有拼音排列组合
                 union = set()
                 for combi in py_combi:
+                    combi_store.add(combi)
                     if len(combi) == 1:
                         inter = db.smembers(pyset_key_prefix + str(class_no) + "::" + combi[0])
                         #s = combi[0]
@@ -73,6 +75,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                     #print "class = %d,py combi %s has %d"%(class_no, s, len(inter))
             else:    ###没有汉字没有英文没有数字
                 continue
+            py_combi = combi_store
             compare_list = get_union_data(_pipe, class_no, union)
             for i in range(len(compare_list)):
                 compare_unit = compare_list[i]
@@ -84,21 +87,24 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 his_name_china = compare_unit["ch"]
                 his_name_bid = compare_unit["bid"]
                 last_class[class_no] = compare_unit
-                #start_time_s = datetime.datetime.now()
+                start_time_s = datetime.datetime.now()
                 py_judge = judge_pinyin(brand_name_pinyin, his_name_pinyin)
                 #logger.info("====%s, %s, %s, %s, %s"%(brand_name, his_name, str(py_judge), str(brand_name_pinyin), his_name_pinyin) )
                 if py_judge == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
-
+                end_time_c = datetime.datetime.now()
+                cost_time_c = (end_time_c - start_time_c).total_seconds()
+                print u"两商标计算拼音近似过滤的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                start_time_s = datetime.datetime.now()
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
                 #if similar == True:
                 #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
                 #else:
                 #    logger.info("XXXXX%s,%s,%s,%s" % (brand_name, his_name, str(compare_Res), str(similar)))
-                #end_time_c = datetime.datetime.now()
-                #cost_time_c = (end_time_c - start_time_c).total_seconds()
-                #print "两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                end_time_c = datetime.datetime.now()
+                cost_time_c = (end_time_c - start_time_c).total_seconds()
+                print u"两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 if similar == True:
                     similar_cnt[class_no] += 1 ###构造返回结果：近似商标名（及特征）
                     out_row = [brand_name, his_name, brand_no_his, class_no]
