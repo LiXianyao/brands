@@ -29,7 +29,7 @@ def load_brand_item():
         item_name = item.item_name
         item_no = item.item_no
         class_no = int(item.class_no)
-        if item_dict.has_key(class_no) == False:
+        if not item_dict.has_key(class_no):
             item_dict[class_no] = {}
         item_dict[class_no][item_no] = (item_no, item_name)
     del brand_item
@@ -44,7 +44,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     brand_name_num , brand_name_eng = strFunction.get_not_china_list(brand_name)
     brand_name_pinyin.extend(brand_name_eng)
     class_no_set = input_json["categories"]
-    logger.debug("brand name is %s, with searching class: %s"%(brand_name,str(class_no_set)))
+    logger.debug("brand name is %s, with searching class: %s" % (brand_name, str(class_no_set)))
     error_occur = False ###标记运行期间是否发生错误
 
     # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）， 包含被包含（越大越近）
@@ -53,8 +53,8 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     # 数字完全匹配（越大越近）
     gate = ['C',0.8,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
 
-    similar_cnt = {k:v for k,v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
-    last_class = {k:v for k,v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
+    similar_cnt = {k: v for k, v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
+    last_class = {k: v for k, v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
     start_time_c = datetime.datetime.now()
 
     return_list = []
@@ -160,17 +160,12 @@ def get_union_data(_pipe, class_no, union):
 def get_pycombi(db, combi, class_no):
     inter_args = []
     combi_len = len(combi)
-    first_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[0], combi[1]])
-    combi_str = combi[0] + "," + combi[1]
+    first_key = pyset_key_prefix + str(class_no) + "::" + combi[0]
+    combi_str = combi[0]
 
-    for i in range(1, combi_len/2):
-        set_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[i * 2], combi[i * 2 + 1]])
-        combi_str += combi[i * 2] + "," + combi[i * 2 + 1]
-        inter_args.append(set_key)
-
-    if combi_len % 2 == 1:##奇数个读音
-        set_key = pyset_key_prefix + str(class_no) + "::" + ','.join([combi[0], combi[-1]])
-        combi_str += combi[-1]
+    for i in range(1, combi_len):
+        set_key = pyset_key_prefix + str(class_no) + "::" + combi[i]
+        combi_str += "," + combi[i]
         inter_args.append(set_key)
 
     inter = db.sinter(first_key, *tuple(inter_args))
