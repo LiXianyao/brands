@@ -34,7 +34,7 @@ def get_china_str(_str):
 
 #拆分非中文字符串，将相邻的字母视作一个词，相邻的数字视作一个数
 def split_not_china(_str):
-    split_list = re.findall(u"[a-zA-Z][a-z]+|[A-Z][A-Z]*|[0-9]+", _str)
+    split_list = re.findall(u"[a-zA-Z][a-z]+|[A-Z][A-Z]*|[a-z]|[0-9]+", _str)
     num_str = ""
     eng_str = ""
     eng_str_2 = ""
