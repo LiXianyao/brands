@@ -1,14 +1,11 @@
 #-*-coding:utf8-*-#
 import sys
-import  ConfigParser
-import redis
 import os
 from pypinyin import lazy_pinyin, Style
 from itertools import combinations
 import datetime
 import trans_pre_data
 from similarity import brand, strFunction
-import  traceback
 sys.path.append("..")
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -41,7 +38,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     brand_name = input_json["name"]
     brand_name_china = strFunction.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china, style=Style.TONE3)
-    brand_name_num , brand_name_eng = strFunction.get_not_china_list(brand_name)
+    brand_name_num , brand_name_eng, character_set = strFunction.get_not_china_list(brand_name)
     brand_name_pinyin.extend(brand_name_eng)
     class_no_set = input_json["categories"]
     logger.debug("brand name is %s, with searching class: %s" % (brand_name, str(class_no_set)))
@@ -51,7 +48,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C',0.8,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
+    gate = ['C',0.67,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
 
     similar_cnt = {k: v for k, v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
     last_class = {k: v for k, v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
@@ -60,12 +57,14 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     return_list = []
     py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
     py_combi = combinations(brand_name_pinyin, py_low)
+    combi_store = set()
     try:
         for class_no in class_no_set:
             if py_low > 0:
                 #共有拼音排列组合
                 union = set()
                 for combi in py_combi:
+                    combi_store.add(combi)
                     if len(combi) == 1:
                         inter = db.smembers(pyset_key_prefix + str(class_no) + "::" + combi[0])
                         #s = combi[0]
@@ -76,6 +75,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                     #print "class = %d,py combi %s has %d"%(class_no, s, len(inter))
             else:    ###没有汉字没有英文没有数字
                 continue
+            py_combi = combi_store
             compare_list = get_union_data(_pipe, class_no, union)
             for i in range(len(compare_list)):
                 compare_unit = compare_list[i]
@@ -87,21 +87,24 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 his_name_china = compare_unit["ch"]
                 his_name_bid = compare_unit["bid"]
                 last_class[class_no] = compare_unit
-                #start_time_s = datetime.datetime.now()
+                start_time_s = datetime.datetime.now()
                 py_judge = judge_pinyin(brand_name_pinyin, his_name_pinyin)
                 #logger.info("====%s, %s, %s, %s, %s"%(brand_name, his_name, str(py_judge), str(brand_name_pinyin), his_name_pinyin) )
                 if py_judge == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
-
+                end_time_c = datetime.datetime.now()
+                cost_time_c = (end_time_c - start_time_c).total_seconds()
+                print u"两商标计算拼音近似过滤的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                start_time_s = datetime.datetime.now()
                 similar, compare_Res = compute_similar(brand_name, his_name, gate)
                 #if similar == True:
                 #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
                 #else:
                 #    logger.info("XXXXX%s,%s,%s,%s" % (brand_name, his_name, str(compare_Res), str(similar)))
-                #end_time_c = datetime.datetime.now()
-                #cost_time_c = (end_time_c - start_time_c).total_seconds()
-                #print "两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                end_time_c = datetime.datetime.now()
+                cost_time_c = (end_time_c - start_time_c).total_seconds()
+                print u"两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 if similar == True:
                     similar_cnt[class_no] += 1 ###构造返回结果：近似商标名（及特征）
                     out_row = [brand_name, his_name, brand_no_his, class_no]
@@ -137,6 +140,8 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
         reload(trans_pre_data)
         itemList = getItemListOfBrand(return_list, item_dict, _pipe)  ###查同音商标名注册的商品项
         return_list = trans_pre_data.trans_pre_data_web(return_list, itemList, class_no_set, item_dict=item_dict)
+        for categoryResult in return_list.values():
+            logger.debug(u"类别 %d 有 %d 条近似商标名" % (categoryResult.getInfo()))
     except:
         error_occur = True
         logger.error(u"特征值预测分类或构造返回结果时发生异常!!", exc_info=True)

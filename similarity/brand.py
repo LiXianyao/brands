@@ -157,7 +157,7 @@ import synonyms
 def implicationApproximation(_str1,_str2):
     if len(_str1) == 0 or len(_str2) == 0:
         return 0
-    return synonyms.compare(_str1,_str2,seg=False) ##有没有必要分词呢？
+    return synonyms.compare(_str1,_str2,seg=True, ignore=True) ##有没有必要分词呢？
 
 
 # 中文字形相似
