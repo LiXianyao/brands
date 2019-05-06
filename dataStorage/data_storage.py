@@ -294,19 +294,19 @@ class DataStorage:
                     logger.error(traceback.format_exc())
                     break
 
-            ##批量插入
-            init_redis_time = time.time()
-            self.redis_con.pipe.execute()
-            init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
-                                                                      output=True)
-            if store_mysql == True:
-                logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
-                db_session.add_all(insert_list)
-                db_session.commit()
-                del insert_list[:]
-                _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql", output=True)
-            ##总时间消耗
-            _, __ = self.compute_time_seg(init_time, 0, "all", output=True)
+        ##批量插入
+        init_redis_time = time.time()
+        self.redis_con.pipe.execute()
+        init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
+                                                                  output=True)
+        if store_mysql == True:
+            logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
+            db_session.add_all(insert_list)
+            db_session.commit()
+            del insert_list[:]
+            _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql", output=True)
+        ##总时间消耗
+        _, __ = self.compute_time_seg(init_time, 0, "all", output=True)
         return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt
 
     def reset_redis_data(self):
