@@ -70,8 +70,8 @@ class DataStorage:
 
     ####record表存到redis中
     def form_brand_record_redis(self, zip_file_name, store_mysql):
-        unzip_dir_name = zip_file_name.split(".zip")[0]
-        os.system("unzip -o " + zip_file_name.encode("utf8") + " -d  " + unzip_dir_name.encode("utf8"))
+        unzip_dir_name = zip_file_name.split(".zip")[0].replace(" ", "")
+        os.system("unzip -o '%s'  -d  '%s'" % (zip_file_name.encode("utf8"), unzip_dir_name.encode("utf8")))
 
         info_csv_name = unzip_dir_name + '/' + self.info_csv_name
         item_csv_name = unzip_dir_name + '/' + self.item_csv_name
@@ -191,18 +191,27 @@ class DataStorage:
         batch = 100000
         insert_list = []
         old = 0
+        init_time = time.time()  # 导入开始时间
+        init_redis_time = time.time()
+        init_mysql_time = time.time()
+        delta_redis_time = 0.
+        delta_mysql_time = 0.
         for line in range(0, line_num):
             if line < old:
                 continue
             if line % batch == 0:
                 logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
                 ##批量插入
+                init_redis_time = time.time()
                 self.redis_con.pipe.execute()
+                init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis", output=True)
                 if store_mysql == True:
                     logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
                     db_session.add_all(insert_list)
                     db_session.commit()
                     del insert_list[:]
+                    _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql", output=True)
+
             ###解析csv字段，并确定数据行的可用性
             try:
                 ###解析数据行，检查取值
@@ -229,6 +238,8 @@ class DataStorage:
                     brand_name = brand_name.strip()
                     ##用id，按大类聚合
                     ##检查大类里是否已经有了这个id
+                    u""" redis操作 """
+                    init_redis_time = time.time()
                     hset_id_key = self.rank_key_prefix + class_no + "::id"
                     hset_cnt_key = self.rank_key_prefix + class_no + "::cnt"
                     insert_state = 1
@@ -248,8 +259,11 @@ class DataStorage:
                             insert_state = 3
                         else:
                             info_ok_cnt += 1
-
+                    u""" redis操作结束 """
+                    _, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
+                                                                              output=False)
                 if store_mysql == True:##是否转存数据库
+                    init_mysql_time = time.time()
                     if insert_state == 4:#更新
                         pass
                         update_record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
@@ -266,6 +280,9 @@ class DataStorage:
                             new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status
                                                       , insert_state)
                             insert_list.append(new_record)
+                    u""" mysql操作结束 """
+                    _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql",
+                                                                              output=False)
             except Exception, e:
                 info_error_cnt += 1
                 logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
@@ -278,11 +295,18 @@ class DataStorage:
                     break
 
             ##批量插入
+            init_redis_time = time.time()
             self.redis_con.pipe.execute()
+            init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
+                                                                      output=True)
             if store_mysql == True:
+                logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
                 db_session.add_all(insert_list)
                 db_session.commit()
                 del insert_list[:]
+                _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql", output=True)
+            ##总时间消耗
+            _, __ = self.compute_time_seg(init_time, 0, "all", output=True)
         return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt
 
     def reset_redis_data(self):
@@ -346,6 +370,14 @@ class DataStorage:
                 item_dict[group_no] = {"class_no": class_no}
             item_dict[group_no][item_name] = item_no
         return item_dict
+
+    def compute_time_seg(self, start, delta, name, output=False):
+        end = time.time()
+        delta = delta + (end - start)
+        if output:
+            logger.info(u"%s处理一个batch耗时 %.f分%.f秒" % (name, delta//60, delta%60))
+        return end, delta
+
 
 ##975418个不同的商标，12277622
 if __name__=="__main__":
