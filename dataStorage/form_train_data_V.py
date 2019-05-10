@@ -78,7 +78,7 @@ class TrainDataFormer:
         for class_no in range(1, 46):
             idkey = self.rank_key_prefix + "%d::cnt" % (class_no)
             idcnt = int(db.get(idkey))
-            for idx in range(idcnt):
+            for idx in range(1, idcnt + 1):
                 self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
                 data_key = self.data_key_prefix + "%d::%d"%( class_no, idx)
                 info_data = db.hgetall(data_key)
@@ -144,7 +144,7 @@ class TrainDataFormer:
 
                     u""" 几个计数值的修改 """
                     # 训练数据太少，不要了
-                    if len(train_data_cache) < 3 or not len(cnt_b[1]):
+                    if len(train_data_cache) < 3 or not cnt_b[1]:
                         continue
                     insert_list.extend(train_data_cache)
                     cnt_res[class_no][loc][brand_status] += 1
@@ -200,10 +200,10 @@ class TrainDataFormer:
                     # s = combi[0]
                 else:
                     ###多元组，将redis中多个集合合并
-                    inter, s = db.get_pycombi(combi, class_no)
+                    inter, s = self.redis_con.get_pycombi(combi, class_no)
                 union = union | inter
                 # print "class = %d,py combi %s has %d"%(class_no, s, len(inter))
-            compare_list = db.get_union_data(class_no, union)
+            compare_list = self.redis_con.get_union_data(class_no, union)
             return compare_list
         else:  ###没有汉字没有英文没有数字
             return []
