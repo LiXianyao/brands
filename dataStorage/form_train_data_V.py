@@ -1,5 +1,4 @@
 #-*-coding:utf8-*-#
-from brand_item import BrandItem
 import time
 import traceback
 from storage_connection import RedisConnection
@@ -7,12 +6,10 @@ from brand_train_data import BrandTrainData, db_session
 import sys
 from pypinyin import lazy_pinyin, Style
 from itertools import combinations
-import os
 import json
 reload(sys)
 sys.setdefaultencoding("utf-8")
 sys.path.append('..')
-from brandInfo.csvReader import CsvReader
 from consoleLogger import logger
 from similarity import strFunction, brand, compute
 import numpy as np
@@ -39,8 +36,6 @@ class TrainDataFormer:
 
     def __init__(self, store_file=False, store_mysql=False):
         self.redis_con = RedisConnection()
-        self.csv_reader = CsvReader()
-        self.item_dict = self.load_brand_item()
         self.gate = ['C', 0.67, 'C', 'C', 'N', 0.67, 0.67, 'C', 'C', 1.0]
         self.store_batch = 100
         self.delta_redis_time = 0.
@@ -212,19 +207,6 @@ class TrainDataFormer:
             return compare_list
         else:  ###没有汉字没有英文没有数字
             return []
-
-    def load_brand_item(self):
-        item_list = BrandItem.query.all()
-        item_dict = {}
-        for item in item_list:
-            group_no = int(item.group_no)
-            item_name = item.item_name
-            item_no = item.item_no
-            class_no = int(item.class_no)
-            if group_no not in item_dict:
-                item_dict[group_no] = {"class_no": class_no}
-            item_dict[group_no][item_name] = item_no
-        return item_dict
 
     def compute_time_seg(self, start, delta, name, output=False):
         end = time.time()
