@@ -3,11 +3,12 @@ from brand_item import BrandItem
 import time
 import traceback
 from storage_connection import RedisConnection
-import pandas as pd
+from brand_train_data import BrandTrainData, db_session
 import sys
 from pypinyin import lazy_pinyin, Style
 from itertools import combinations
 import os
+import json
 reload(sys)
 sys.setdefaultencoding("utf-8")
 sys.path.append('..')
@@ -24,9 +25,9 @@ class TrainDataFormer:
     item_key_prefix = "bItem::"
 
     limit = [
-        {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "upb": "2015"},
-        {"func": lambda x: "2015" < x < "2017", "cnt": 500, "bcnt": 10, "upb": "2017"},
-        {"func": lambda x: "2017" < x < "201811", "cnt": 500, "bcnt": 10, "upb": "201811"}
+        {"func": lambda x: x < "2015", "cnt":5, "bcnt":10, "upb": "2015"},
+        {"func": lambda x: "2015" < x < "2017", "cnt": 5, "bcnt": 10, "upb": "2017"},
+        {"func": lambda x: "2017" < x < "201811", "cnt": 5, "bcnt": 10, "upb": "201811"}
              ]
 
     u""" 训练数据 mysql表:
@@ -36,13 +37,16 @@ class TrainDataFormer:
         待查商标与历史商标的相似计算结果（list转json串）
      """
 
-    def __init__(self, store_mysql=False):
+    def __init__(self, store_file=False, store_mysql=False):
         self.redis_con = RedisConnection()
         self.csv_reader = CsvReader()
         self.item_dict = self.load_brand_item()
         self.gate = ['C', 0.67, 'C', 'C', 'N', 0.67, 0.67, 'C', 'C', 1.0]
+        self.store_batch = 100
+        self.delta_redis_time = 0.
+        self.delta_mysql_time = 0.
         #构造训练数据
-        self.form_brand_record_redis(store_mysql)
+        self.form_train_data(store_mysql)
 
     def get_limit_loc(self, apply_date):
         loc = 0
@@ -66,107 +70,22 @@ class TrainDataFormer:
             return False
         return True
 
-    ####record表存到redis中
-    def form_brand_train_data(self, store_mysql):
-        u"""
-        依照大类遍历每个大类下的所有数据。以被选中的商标作为“待查商标”，每个大类各选1000个注册成功/失败的待查商标（最多各500个15年以前的）
-         --也就是最多9W个。每个商标最多取10个近似商标，近似商标除了相似度满足要求外，还要申请时间<待查商标
-        """
-        unzip_dir_name = zip_file_name.split(".zip")[0].replace(" ", "")
-        os.system("unzip -o '%s'  -d  '%s'" % (zip_file_name.encode("utf8"), unzip_dir_name.encode("utf8")))
-
-        info_csv_name = unzip_dir_name + '/' + self.info_csv_name
-        item_csv_name = unzip_dir_name + '/' + self.item_csv_name
-        info_load_state, info_data = self.csv_reader.load_csv_to_pandas(info_csv_name)
-        item_load_state, item_data = self.csv_reader.load_csv_to_pandas(item_csv_name)
-        if info_load_state and item_load_state == False:
-            logger.error(u"注意：压缩包%s中有解析失败的数据文件，已经跳过"%(zip_file_name.encode("utf8")))
-            return
-        else:
-            logger.info(u"压缩包%s中数据文件解析成功，开始导入Redis数据库" % (zip_file_name.encode("utf8")))
-
-            logger.info(u"开始导入csv文件:%s... ..." % info_csv_name)
-            line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt \
-                = self.process_info_csv(info_data, store_mysql)
-            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d，"
-                        u"数据行不合法%d行，图形商标或无名字商标%d行，重复的注册号%d, 插入数据出错%d行" %
-                        (info_csv_name, line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt))
-
-            logger.info(u"开始导入csv文件:%s... ..." % item_csv_name)
-            line_num, item_ok_cnt, item_invalid_class_cnt, item_invalid_group_cnt, item_invalid_product_cnt\
-                , item_miss_cnt = self.process_item_csv(item_data)
-            logger.info(u"csv文件 %s 处理完毕，文件有效行总计 %d行, 导入成功行数%d，"
-                        u"数据行不合法行：（国际类别不合法%d行，类似群不合法%d行，商品项不在尼斯文件内%d行）"
-                        u"，另外还有对应的注册号不在库中的数据%d行" %
-                        (item_csv_name, line_num, item_ok_cnt, item_invalid_class_cnt, item_invalid_group_cnt,
-                         item_invalid_product_cnt, item_miss_cnt))
-
-            logger.info(u"压缩包%s中的信息已导入完毕，导入后的数据分布为：")
-            self.key_statistic()
-
-    def key_statistic(self):
-        u"""
-        对四十五大类的独立商标（不重复的《注册号+商标名》二元组）进行统计
-        :return:
-        """
-        for class_no in range(1, 46):
-            record_key = self.rank_key_prefix + str(class_no) + "::id"
-            record_cnt_key = self.rank_key_prefix + str(class_no) + "::cnt"
-            set_size = self.redis_con.db.hlen(record_key)
-            set_size = int(set_size) if set_size else 0
-            cnt_set_size = self.redis_con.db.get(record_cnt_key)
-            cnt_set_size = int(cnt_set_size) if cnt_set_size else 0
-
-            data_key = self.data_key_prefix + str(class_no) + "::*"
-            data_key_set = self.redis_con.db.keys(data_key)
-            set_data_size = len(data_key_set)
-
-            item_key = self.item_key_prefix + str(class_no) + "::*"
-            item_key_set = self.redis_con.db.keys(item_key)
-            set_item_size = len(item_key_set)
-            logger.info(u"第 %d 大类总计有 %d 个不同的注册号（计数量%d), "\
-                        u"对应的数据存储量%d, 商品项表%d"
-                        % (class_no, set_size, cnt_set_size, set_data_size, set_item_size))
-
     u"""
     处理基本信息的函数
     """
-    def process_info_csv(self, info_data, store_mysql):
+    def form_train_data(self, store_mysql):
         ##先处理基本信息
-
-        info_ok_cnt = 0
-        info_invalid_cnt = 0
-        info_skip_cnt = 0
-        info_unique_cnt = 0
-        info_error_cnt = 0
-        batch = 100000
         insert_list = []
-        old = 0
-        init_time = time.time()  # 导入开始时间
-        init_redis_time = time.time()
-        init_mysql_time = time.time()
-        delta_redis_time = 0.
-        delta_mysql_time = 0.
         db = self.redis_con.db
         cnt_res = np.zeros([46, len(self.limit), 2], dtype=int)
+        cnt_suc = np.zeros([46], dtype=int)
+        cnt_b_suc = np.zeros([46, 2], dtype=int)
         for class_no in range(1, 46):
             idkey = self.rank_key_prefix + "%d::cnt" % (class_no)
             idkey = int(idkey)
-            for id in range(idkey):
-                if line % batch == 0:
-                    logger.info(u"数据导入中，处理进度%d/%d" % (line, line_num))
-                    ##批量插入
-                    init_redis_time = time.time()
-                    self.redis_con.pipe.execute()
-                    init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis", output=True)
-                    if store_mysql == True:
-                        logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
-                        db_session.add_all(insert_list)
-                        db_session.commit()
-                        del insert_list[:]
-                        _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql", output=True)
-
-                data_key = self.data_key_prefix + "%d::%d"
+            for idx in range(idkey):
+                self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
+                data_key = self.data_key_prefix + "%d::%d"%( class_no, idx)
                 info_data = db.hgetall(data_key)
 
                 ###解析数据行，检查取值
@@ -187,16 +106,15 @@ class TrainDataFormer:
                 brand_name_num, brand_name_eng, character_set = strFunction.get_not_china_list(brand_name)
                 brand_name_pinyin.extend(brand_name_eng)
 
-                similar_cnt = 0
-                last_class = {}
                 compare_list = self.get_pysimilar_unit(brand_name_pinyin, db, class_no)
                 cnt_b = np.zeros([2], dtype=int)  # 对当前这个待查商标的近似商标的计数
                 if compare_list: #非空，即找到了近似商标
+                    train_data_cache = []
                     for i in range(len(compare_list)):
                         compare_unit = compare_list[i]
                         his_apply_date = compare_unit["date"]
                         his_name = compare_unit["name"]
-                        his_brand_sts = compare_unit["sts"]
+                        his_brand_sts = int(compare_unit["sts"])
                         # 检查申请日期 < 待查商标，商标名长度
                         check_res = self.check_info_valid(his_name, his_apply_date, date_limit=apply_date)
                         if not check_res:
@@ -207,7 +125,6 @@ class TrainDataFormer:
                         his_brand_no = compare_unit["no"]
                         his_name_eng = compare_unit["eng"]
                         his_name_pinyin = self.concate(his_name_pinyin, his_name_eng)
-                        last_class[class_no] = compare_unit
                         if not compute.judge_pinyin(brand_name_pinyin, his_name_pinyin):
                             if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(
                                     brand_name_china, his_name_china) < 0.9:
@@ -218,16 +135,54 @@ class TrainDataFormer:
                         similar_loc = 0
                         if similar == True:  # 有某项相似度较高，记为相似度高的记录
                             similar_loc = 1
+                        u""" 相似度高的样本、相似度低的样本各取b个 """
                         check_res = self.check_info_valid(his_name, his_apply_date,
-                                                          cnt=cnt_b[his_brand_sts], cnt_limit=b_limit,
+                                                          cnt=cnt_b[similar_loc], cnt_limit=b_limit,
                                                           date_limit=apply_date)
                         if not check_res:
                             continue
-                            out_row = [brand_name.encode("gbk"), his_name.encode("gbk"), brand_no, his_brand_no,
-                                       class_no, compare_Res, brand_status, compare_unit["sts"], '1']
-                            writer.writerow(out_row)
-                            similar_cnt += 1
+                        similarity = json.dumps(compare_Res)
+                        train_data = BrandTrainData(brand_no, brand_name,brand_status, apply_date, class_no, his_brand_no,
+                                                    his_name, his_brand_sts, his_apply_date, similarity)
+                        train_data_cache.append(train_data)
+                        cnt_b[similar_loc] += 1
+
+                    u""" 几个计数值的修改 """
+                    # 训练数据太少，不要了
+                    if len(train_data_cache) < 3 or not len(cnt_b[1]):
+                        continue
+                    insert_list.extend(train_data_cache)
+                    cnt_res[class_no][loc][brand_status] += 1
+                    cnt_suc[class_no] += 1
+                    cnt_b_suc[class_no] += cnt_b
                     del compare_list
+                u""" 某一类的商标数达到目标则结束这个类别的检索 """
+                if np.sum(cnt_res[class_no][loc]) == 2 * cnt_limit:
+                    break
+            class_suc_cnt = np.sum(cnt_res[class_no], axis=0)
+            logger.info(u"国际分类%d的商标检索已结束，共计提取样本%d个，其中%d个通过商标样本和%d个不通过商标样本" % (class_no,cnt_suc[class_no], class_suc_cnt[1], class_suc_cnt[class_no][0]))
+            logger.info(u"对应的近似度高商标和近似度低商标分别有%d个 和 %d个"%(cnt_b_suc[class_no][1], cnt_b_suc[class_no][0]))
+            del idkey[:]
+            self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
+        self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list, force=True)
+
+    u""" 按条件，批量存储数据 """
+    def batch_store(self, cnt_suc, cnt_b_suc, store_mysql, insert_list, force=False):
+        cur_suc = np.sum(cnt_suc)
+        cur_b_suc = np.sum(cnt_b_suc)
+        if cur_suc % self.store_batch == 0 or force:
+            logger.info(u"训练数据构造中，已检索到%d个满足要求的实例，生成训练样本%d个" % (cur_suc, cur_b_suc))
+            ##批量插入
+            init_redis_time = time.time()
+            self.redis_con.pipe.execute()
+            init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, self.delta_redis_time, "redis",
+                                                                      output=True)
+            if store_mysql == True:
+                logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
+                db_session.add_all(insert_list)
+                db_session.commit()
+                del insert_list[:]
+                _, delta_mysql_time = self.compute_time_seg(init_mysql_time, self.delta_mysql_time, "mysql", output=True)
 
     u""" 返回中文与英文部分的拼接串 """
     def concate(self, his_name_pinyin, his_name_eng):
@@ -282,7 +237,7 @@ class TrainDataFormer:
 
 ##975418个不同的商标，12277622
 if __name__=="__main__":
-    data_storage = DataStorage(clean_out=False, store_mysql=True)
+    train_data_former = TrainDataFormer(store_file=False, store_mysql=True)
 
 
 
