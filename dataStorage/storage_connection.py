@@ -5,8 +5,12 @@ import sys
 sys.path.append("..")
 from consoleLogger import logger
 
-
 class RedisConnection:
+    rank_key_prefix = "bRank::"
+    data_key_prefix = "bData::"
+    py_key_prefix = "bPySet::"  # set
+    item_key_prefix = "bItem::"
+
     def __init__(self, config_file="storage_redis.config"):
         self.config_file_name = config_file
         ###读取配置文件
@@ -52,6 +56,28 @@ class RedisConnection:
             brand_no_sum += int(brand_cnt)
         print "brand no intotal with %d" % brand_no_sum
 
+    ####从redis中读取读音组合对应的商标号集合
+    ##大于等于二元组的，用redis去算交集
+    def get_pycombi(self, combi, class_no):
+        inter_args = []
+        combi_len = len(combi)
+        first_key = self.py_key_prefix + str(class_no) + "::" + combi[0]
+        combi_str = combi[0]
+
+        for i in range(1, combi_len):
+            set_key = self.py_key_prefix + str(class_no) + "::" + combi[i]
+            combi_str += "," + combi[i]
+            inter_args.append(set_key)
+
+        inter = self.db.sinter(first_key, *tuple(inter_args))
+        return inter, combi_str
+
+    ##根据编号集合和大类号，获取对应的数据
+    def get_union_data(self, class_no, union):
+        for bid in union:
+            bdata_key = self.data_key_prefix + str(class_no) + "::" + str(bid)
+            self.pipe.hgetall(bdata_key)
+        return self.pipe.execute()
 
 if __name__=="__main__":
     con = RedisConnection()

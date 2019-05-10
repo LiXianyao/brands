@@ -13,8 +13,8 @@ sys.setdefaultencoding("utf-8")
 sys.path.append('..')
 from brandInfo.csvReader import CsvReader
 from consoleLogger import logger
-from similarity import strFunction
-from brand_train_data import BrandTrainData
+from similarity import strFunction, brand, compute
+import numpy as np
 
 class TrainDataFormer:
 
@@ -40,6 +40,7 @@ class TrainDataFormer:
         self.redis_con = RedisConnection()
         self.csv_reader = CsvReader()
         self.item_dict = self.load_brand_item()
+        self.gate = ['C', 0.67, 'C', 'C', 'N', 0.67, 0.67, 'C', 'C', 1.0]
         #构造训练数据
         self.form_brand_record_redis(store_mysql)
 
@@ -50,10 +51,10 @@ class TrainDataFormer:
             if f(apply_date): # 申请日期满足限定条件
                 loc = idx
                 break
-        return  loc
+        return  loc, self.limit[loc]["cnt"], self.limit[loc]["bcnt"]
 
 
-    def check_info_valid(self, brand_name, apply_date, date_limit="3000"):
+    def check_info_valid(self, brand_name, apply_date, cnt=0, cnt_limit=1, date_limit="3000"):
         u""" 检查对应的数据段是否满足取用的要求 """
         if apply_date >= date_limit:
             return False
@@ -61,6 +62,8 @@ class TrainDataFormer:
         if len(brand_name) * 3 > 64:
             return False
 
+        if cnt >= cnt_limit:
+            return False
         return True
 
     ####record表存到redis中
@@ -145,9 +148,8 @@ class TrainDataFormer:
         delta_redis_time = 0.
         delta_mysql_time = 0.
         db = self.redis_con.db
-        cnt_res = []
+        cnt_res = np.zeros([46, len(self.limit), 2], dtype=int)
         for class_no in range(1, 46):
-            cnt_res.append([[0, 0]] * len(self.limit)) # 每个大类里为每种预定义类型找的通过/不通过（待查）商标计数
             idkey = self.rank_key_prefix + "%d::cnt" % (class_no)
             idkey = int(idkey)
             for id in range(idkey):
@@ -172,139 +174,89 @@ class TrainDataFormer:
                 apply_date = info_data["date"]
                 brand_name = info_data["name"]
                 brand_status = int(info_data["sts"])
-                loc = self.get_limit_loc(apply_date)
-                check_res = self.check_info_valid(apply_date, class_no)
+                loc, cnt_limit, b_limit = self.get_limit_loc(apply_date)
+                check_res = self.check_info_valid(brand_name, apply_date, cnt=cnt_res[class_no][loc][brand_status], cnt_limit=cnt_limit)
 
                 if not check_res:
-                    continue
-                    info_invalid_cnt += 1
-                    logger.error(u"发现错误数据行，数据行号%d，已跳过，原因：数据行内容取值不符合预期取值的格式,"
-                                 u"apply_date=%s, class_no = %s" %
-                                 (line, apply_date, class_no))
+                    u"""商标长度不合格或者计数已经够了"""
                     continue
 
-                ##解析数据行的商标名，是图形或者空就跳过
-                brand_name = info_data[u"商标名称"][line]
-                if brand_name == u"图形" or pd.isna(brand_name) or len(brand_name.strip()) == 0:  # 商标名是图形的其实是图形商标
-                    info_skip_cnt += 1
-                    brand_name = str(brand_name)
-                    insert_state = 2
+                u""" 获取商标的拼音+英文字符集，准备查询 """
+                brand_name_china = strFunction.get_china_str(brand_name)
+                brand_name_pinyin = lazy_pinyin(brand_name_china, style=Style.TONE3)
+                brand_name_num, brand_name_eng, character_set = strFunction.get_not_china_list(brand_name)
+                brand_name_pinyin.extend(brand_name_eng)
+
+                similar_cnt = 0
+                last_class = {}
+                compare_list = self.get_pysimilar_unit(brand_name_pinyin, db, class_no)
+                cnt_b = np.zeros([2], dtype=int)  # 对当前这个待查商标的近似商标的计数
+                if compare_list: #非空，即找到了近似商标
+                    for i in range(len(compare_list)):
+                        compare_unit = compare_list[i]
+                        his_apply_date = compare_unit["date"]
+                        his_name = compare_unit["name"]
+                        his_brand_sts = compare_unit["sts"]
+                        # 检查申请日期 < 待查商标，商标名长度
+                        check_res = self.check_info_valid(his_name, his_apply_date, date_limit=apply_date)
+                        if not check_res:
+                            continue
+
+                        his_name_pinyin = compare_unit["py"]
+                        his_name_china = compare_unit["ch"]
+                        his_brand_no = compare_unit["no"]
+                        his_name_eng = compare_unit["eng"]
+                        his_name_pinyin = self.concate(his_name_pinyin, his_name_eng)
+                        last_class[class_no] = compare_unit
+                        if not compute.judge_pinyin(brand_name_pinyin, his_name_pinyin):
+                            if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(
+                                    brand_name_china, his_name_china) < 0.9:
+                                continue
+                        # 计算相似度
+                        # print "brand %s, his%s, class %d"%(brand_name, his_name, class_no)
+                        similar, compare_Res = compute.compute_similar(brand_name, his_name, self.gate)
+                        similar_loc = 0
+                        if similar == True:  # 有某项相似度较高，记为相似度高的记录
+                            similar_loc = 1
+                        check_res = self.check_info_valid(his_name, his_apply_date,
+                                                          cnt=cnt_b[his_brand_sts], cnt_limit=b_limit,
+                                                          date_limit=apply_date)
+                        if not check_res:
+                            continue
+                            out_row = [brand_name.encode("gbk"), his_name.encode("gbk"), brand_no, his_brand_no,
+                                       class_no, compare_Res, brand_status, compare_unit["sts"], '1']
+                            writer.writerow(out_row)
+                            similar_cnt += 1
+                    del compare_list
+
+    u""" 返回中文与英文部分的拼接串 """
+    def concate(self, his_name_pinyin, his_name_eng):
+        if len(his_name_pinyin) > 0:
+            if len(his_name_eng) > 0:
+                his_name_pinyin = his_name_pinyin + "," + his_name_eng
+        elif len(his_name_eng) > 0:
+            his_name_pinyin = his_name_eng
+        return his_name_pinyin
+
+    def get_pysimilar_unit(self, brand_name_pinyin, db, class_no):
+        py_low = compute.compute_py_lowb(brand_name_pinyin)  ##根据长度确定确定排列组合的下界
+        py_combi = combinations(brand_name_pinyin, py_low)
+        if py_low > 0:
+            # 共有拼音排列组合
+            union = set()
+            for combi in py_combi:
+                if len(combi) == 1:
+                    inter = db.smembers(self.py_key_prefix + str(class_no) + "::" + combi[0])
+                    # s = combi[0]
                 else:
-                    brand_name = brand_name.strip()
-                    ##用id，按大类聚合
-                    ##检查大类里是否已经有了这个id
-                    u""" redis操作 """
-                    init_redis_time = time.time()
-                    hset_id_key = self.rank_key_prefix + class_no + "::id"
-                    hset_cnt_key = self.rank_key_prefix + class_no + "::cnt"
-                    insert_state = 1
-                    b_id = self.redis_con.db.hget(hset_id_key, brand_no)
-                    if not b_id:
-                        ###只有不在集合里，才生成并更新
-                        ##将他先加入某个大类，分配一个id，然后还要存储它的数据、构造读音集合等
-                        b_id = self.redis_con.db.incr(hset_cnt_key)
-                        self.redis_con.db.hset(hset_id_key, brand_no, b_id)
-                    else: ###重复的，只考虑更新商标状态和日期
-                        info_unique_cnt += 1
-                        insert_state = 4
-
-                    if not self.redis_con.db.hget(self.data_key_prefix + str(class_no) + "::" + str(b_id), "bid"):
-                        if self.add_new_brand(brand_name, brand_no, brand_status, apply_date, class_no, b_id, line):
-                            info_skip_cnt += 1
-                            insert_state = 3
-                        else:
-                            info_ok_cnt += 1
-                    u""" redis操作结束 """
-                    _, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
-                                                                              output=False)
-                if store_mysql == True:##是否转存数据库
-                    init_mysql_time = time.time()
-                    if insert_state == 4:#更新
-                        pass
-                        update_record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
-                        if update_record:
-                            update_record.brand_status = brand_status
-                            update_record.apply_date = apply_date
-                        else:
-                            update_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status,
-                                              insert_state)
-                        insert_list.append(update_record)
-                    else:
-                        record = db_session.query(BrandHistory).filter(BrandHistory.brand_no == brand_no).first()
-                        if not record:
-                            new_record = BrandHistory(brand_no, brand_name, apply_date, int(class_no), brand_status
-                                                      , insert_state)
-                            insert_list.append(new_record)
-                    u""" mysql操作结束 """
-                    _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql",
-                                                                              output=False)
-            except Exception, e:
-                info_error_cnt += 1
-                logger.error(u"将第%d行数据导入数据库时发生错误，原因：" % line)
-                logger.error(traceback.format_exc())
-                try:
-                    test_redis = self.redis_con.db.get(self.rank_key_prefix + "1::id")
-                except:
-                    logger.error(u"reids数据库崩溃，不可继续存储，请检查内存空间是否足够")
-                    logger.error(traceback.format_exc())
-                    break
-
-        ##批量插入
-        init_redis_time = time.time()
-        self.redis_con.pipe.execute()
-        init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
-                                                                  output=True)
-        if store_mysql == True:
-            logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
-            db_session.add_all(insert_list)
-            db_session.commit()
-            del insert_list[:]
-            _, delta_mysql_time = self.compute_time_seg(init_mysql_time, delta_mysql_time, "mysql", output=True)
-        ##总时间消耗
-        _, __ = self.compute_time_seg(init_time, 0, "all", output=True)
-        return line_num, info_ok_cnt, info_invalid_cnt, info_skip_cnt, info_unique_cnt, info_error_cnt
-
-    ###在redis数据库中增加一个新商标的相关数据
-    def add_new_brand(self, brand_name, brand_no, brand_status, apply_date, class_no, b_id, line_no):
-        ##将商标名分解为中文、英文、数字，中文转拼音，英文分成词，并把拼音和英文词合并
-        brand_china = strFunction.get_china_str(brand_name)
-        brand_pinyin = lazy_pinyin(brand_china, style=Style.TONE3)
-        brand_num, brand_eng, brand_letters = strFunction.get_not_china_list(brand_name)
-
-        record_dict = {
-            "bid": b_id,
-            "name": brand_name,
-            "no": brand_no,
-            "sts": brand_status,
-            "py": ','.join(brand_pinyin),
-            "ch": brand_china,
-            "eng": ','.join(brand_eng),
-            "num": ','.join(brand_num),
-            "date": apply_date
-        }
-        ###存储数据
-        data_key = self.data_key_prefix + str(class_no) + "::" + str(b_id)
-        #print data_key
-        #print record_dict
-        self.redis_con.pipe.hmset(data_key, record_dict)
-
-        cnt_skip = 0
-        ###存储拼音/英文字集合
-        brand_py_unit = []
-        brand_py_unit.extend(brand_pinyin)
-        #brand_py_unit.extend(brand_eng)
-        brand_py_unit.extend(brand_letters)
-        brand_py_unit.extend(brand_num)
-        if len(brand_py_unit) > 0:
-            ###对每个单字都存一个集合
-            for py in brand_py_unit:
-                set_key = self.py_key_prefix + str(class_no) + "::" + py ##key = "bPySet::1::ni2" ,类似这样的
-                #print set_key
-                self.redis_con.pipe.sadd(set_key, b_id)
-        else:
-            cnt_skip = 1
-            logger.debug(u"出现不含中文、英文与数字的商标,或者只包含无法解析的字体/符号，商标名：brand %s ,line_no = %d"%(brand_name, line_no))
-        return cnt_skip
+                    ###多元组，将redis中多个集合合并
+                    inter, s = db.get_pycombi(combi, class_no)
+                union = union | inter
+                # print "class = %d,py combi %s has %d"%(class_no, s, len(inter))
+            compare_list = db.get_union_data(class_no, union)
+            return compare_list
+        else:  ###没有汉字没有英文没有数字
+            return []
 
     def load_brand_item(self):
         item_list = BrandItem.query.all()
@@ -325,6 +277,7 @@ class TrainDataFormer:
         if output:
             logger.info(u"%s处理一个batch耗时 %.f分%.f秒" % (name, delta//60, delta%60))
         return end, delta
+
 
 
 ##975418个不同的商标，12277622
