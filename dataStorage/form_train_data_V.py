@@ -77,8 +77,8 @@ class TrainDataFormer:
         cnt_b_suc = np.zeros([46, 2], dtype=int)
         for class_no in range(1, 46):
             idkey = self.rank_key_prefix + "%d::cnt" % (class_no)
-            idkey = int(idkey)
-            for idx in range(idkey):
+            idcnt = int(db.get(idkey))
+            for idx in range(idcnt):
                 self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
                 data_key = self.data_key_prefix + "%d::%d"%( class_no, idx)
                 info_data = db.hgetall(data_key)
