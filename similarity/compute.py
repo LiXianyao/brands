@@ -15,9 +15,9 @@ def compute_similar(brand_name, his_name, gate):
     similar = False
     for index in range(len(compare_Res)):
         if gate[index] == 'C':
-            if len(brand_name) < 4 and compare_Res[index] >= 0.6:
+            if len(brand_name) < 4 and compare_Res[index] >= 0.67:
                 similar = True
-            elif len(brand_name) >= 4 and compare_Res[index] >= 0.6:
+            elif len(brand_name) >= 4 and compare_Res[index] >= 0.67:
                 similar = True
         elif gate[index] == 'N':
             continue
