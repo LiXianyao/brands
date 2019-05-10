@@ -52,7 +52,7 @@ class TrainDataFormer:
         return  loc, self.limit[loc]["func"], self.limit[loc]["cnt"], self.limit[loc]["bcnt"]
 
 
-    def check_info_valid(self, brand_name, apply_date, cnt=0, cnt_limit=1, date_limit="3000"):
+    def check_info_valid(self, brand_name, apply_date, cnt=0, cnt_limit=1, date_limit="201811"):
         u""" 检查对应的数据段是否满足取用的要求 """
         if apply_date >= date_limit:
             return False
