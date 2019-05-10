@@ -155,9 +155,8 @@ class TrainDataFormer:
                 if np.sum(cnt_res[class_no][loc]) == 2 * cnt_limit:
                     break
             class_suc_cnt = np.sum(cnt_res[class_no], axis=0)
-            logger.info(u"国际分类%d的商标检索已结束，共计提取样本%d个，其中%d个通过商标样本和%d个不通过商标样本" % (class_no,cnt_suc[class_no], class_suc_cnt[1], class_suc_cnt[class_no][0]))
+            logger.info(u"国际分类%d的商标检索已结束，共计提取样本%d个，其中%d个通过商标样本和%d个不通过商标样本" % (class_no,cnt_suc[class_no], class_suc_cnt[1], class_suc_cnt[0]))
             logger.info(u"对应的近似度高商标和近似度低商标分别有%d个 和 %d个"%(cnt_b_suc[class_no][1], cnt_b_suc[class_no][0]))
-            del idkey[:]
             self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
         self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list, force=True)
 
