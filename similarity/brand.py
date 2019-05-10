@@ -14,7 +14,7 @@ import jieba
 from strFunction import isChina, split_not_china
 import time
 import math
-timeDefault = True
+timeDefault = False
 
 
 def init_String(_str):
@@ -251,4 +251,5 @@ def getCharacteristics(_str1,_str2, ctime=timeDefault):
 if __name__=="__main__":
     brand_name = u"和尚志x"
     his_name = u"x志尚和"
+    timeDefault = True
     print getCharacteristics(brand_name, his_name)  ###构造返回结果：近似商标名（及特征）
