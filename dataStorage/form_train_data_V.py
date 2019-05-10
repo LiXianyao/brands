@@ -22,9 +22,9 @@ class TrainDataFormer:
     item_key_prefix = "bItem::"
 
     limit = [
-        {"func": lambda x: x < "2015", "cnt":5, "bcnt":10, "upb": "2015"},
-        {"func": lambda x: "2015" < x < "2017", "cnt": 5, "bcnt": 10, "upb": "2017"},
-        {"func": lambda x: "2017" < x < "201811", "cnt": 5, "bcnt": 10, "upb": "201811"}
+        {"func": lambda x: x < "2015", "cnt":100, "bcnt":10, "upb": "2015"},
+        {"func": lambda x: "2015" < x < "2017", "cnt": 100, "bcnt": 10, "upb": "2017"},
+        {"func": lambda x: "2017" < x < "201811", "cnt": 100, "bcnt": 10, "upb": "201811"}
              ]
 
     u""" 训练数据 mysql表:
@@ -164,7 +164,7 @@ class TrainDataFormer:
     def batch_store(self, cnt_suc, cnt_b_suc, store_mysql, insert_list, force=False):
         cur_suc = np.sum(cnt_suc)
         cur_b_suc = np.sum(cnt_b_suc)
-        if cur_suc % self.store_batch == 0 or force:
+        if (cur_suc % self.store_batch == 0 or force) and len(insert_list):
             logger.info(u"训练数据构造中，已检索到%d个满足要求的实例，生成训练样本%d个" % (cur_suc, cur_b_suc))
             ##批量插入
             init_mysql_time = time.time()
