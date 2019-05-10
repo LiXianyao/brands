@@ -38,7 +38,6 @@ class TrainDataFormer:
         self.redis_con = RedisConnection()
         self.gate = ['C', 0.67, 'C', 'C', 'N', 0.67, 0.67, 'C', 'C', 1.0]
         self.store_batch = 100
-        self.delta_redis_time = 0.
         self.delta_mysql_time = 0.
         #构造训练数据
         self.form_train_data(store_mysql)
@@ -50,7 +49,7 @@ class TrainDataFormer:
             if f(apply_date): # 申请日期满足限定条件
                 loc = idx
                 break
-        return  loc, self.limit[loc]["cnt"], self.limit[loc]["bcnt"]
+        return  loc, self.limit[loc]["func"], self.limit[loc]["cnt"], self.limit[loc]["bcnt"]
 
 
     def check_info_valid(self, brand_name, apply_date, cnt=0, cnt_limit=1, date_limit="3000"):
@@ -88,7 +87,7 @@ class TrainDataFormer:
                 apply_date = info_data["date"]
                 brand_name = info_data["name"]
                 brand_status = int(info_data["sts"])
-                loc, cnt_limit, b_limit = self.get_limit_loc(apply_date)
+                loc, f, cnt_limit, b_limit = self.get_limit_loc(apply_date)
                 check_res = self.check_info_valid(brand_name, apply_date, cnt=cnt_res[class_no][loc][brand_status], cnt_limit=cnt_limit)
 
                 if not check_res:
@@ -112,7 +111,7 @@ class TrainDataFormer:
                         his_brand_sts = int(compare_unit["sts"])
                         # 检查申请日期 < 待查商标，商标名长度
                         check_res = self.check_info_valid(his_name, his_apply_date, date_limit=apply_date)
-                        if not check_res:
+                        if not check_res or not f(his_apply_date):
                             continue
 
                         his_name_pinyin = compare_unit["py"]
@@ -159,6 +158,7 @@ class TrainDataFormer:
             logger.info(u"对应的近似度高商标和近似度低商标分别有%d个 和 %d个"%(cnt_b_suc[class_no][1], cnt_b_suc[class_no][0]))
             self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
         self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list, force=True)
+        logger.info(u"--->程序执行完毕，请到数据库中查看结果")
 
     u""" 按条件，批量存储数据 """
     def batch_store(self, cnt_suc, cnt_b_suc, store_mysql, insert_list, force=False):
@@ -167,16 +167,13 @@ class TrainDataFormer:
         if cur_suc % self.store_batch == 0 or force:
             logger.info(u"训练数据构造中，已检索到%d个满足要求的实例，生成训练样本%d个" % (cur_suc, cur_b_suc))
             ##批量插入
-            init_redis_time = time.time()
-            self.redis_con.pipe.execute()
-            init_mysql_time, delta_redis_time = self.compute_time_seg(init_redis_time, self.delta_redis_time, "redis",
-                                                                      output=True)
+            init_mysql_time = time.time()
             if store_mysql == True:
                 logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
                 db_session.add_all(insert_list)
                 db_session.commit()
                 del insert_list[:]
-                _, delta_mysql_time = self.compute_time_seg(init_mysql_time, self.delta_mysql_time, "mysql", output=True)
+                _, self.delta_mysql_time = self.compute_time_seg(init_mysql_time, self.delta_mysql_time, "mysql", output=True)
 
     u""" 返回中文与英文部分的拼接串 """
     def concate(self, his_name_pinyin, his_name_eng):
