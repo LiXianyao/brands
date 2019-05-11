@@ -21,8 +21,8 @@ class TrainDataFormer:
 
     limit = [
         {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "range": "apply_date < '2015'", "id":"train_before2015"},
-        {"func": lambda x: "2015" < x < "2017", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date < '2017'","id":"test_after2015"},
-        {"func": lambda x: "2017" < x < "201811", "cnt": 500, "bcnt": 10, "range": "'2017'< apply_date < '201811'", "id":"test_after2017"}
+        {"func": lambda x: "2015" < x < "201804", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '201804'","id":"test_after2015"},
+        {"func": lambda x: "201804" < x < "201811", "cnt": 500, "bcnt": 10, "range": "'201804'< apply_date and apply_date < '201811'", "id":"test_after201804"}
              ]
 
     u""" 训练数据 mysql表:
@@ -159,6 +159,7 @@ class TrainDataFormer:
                     break
             class_suc_cnt = np.sum(cnt_res[class_no], axis=0)
             logger.info(u"国际分类%d的商标检索已结束，共计提取样本%d个，其中%d个通过商标样本和%d个不通过商标样本" % (class_no,cnt_suc[class_no], class_suc_cnt[1], class_suc_cnt[0]))
+            print u"第%d国际分类的检索情况为：", cnt_res[class_no]
             logger.info(u"对应的近似度高商标和近似度低商标分别有%d个 和 %d个"%(cnt_b_suc[class_no][1], cnt_b_suc[class_no][0]))
             self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
         self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list, force=True)
