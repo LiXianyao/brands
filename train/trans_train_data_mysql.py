@@ -47,9 +47,13 @@ def train_Data(train_data_list, taskId=taskId):
         input_lines[this_status].append( [input_line, ",".join([this_name, his_name, str(class_no)])] )
 
     print " 0 has %d, 1 has %d "%(len(input_lines[0]),len(input_lines[1]))
-
-    train_lines = input_lines[0]
-    train_lines.extend(input_lines[1])
+    u""" 取两者之小作为 """
+    limit = min(len(input_lines[0]),len(input_lines[1])) * 1.5
+    train_lines = input_lines[0][:limit]
+    len_false = len(train_lines)
+    train_lines.extend(input_lines[1][:limit])
+    len_true = len(train_lines) - len_false
+    print "after cut, 0 has %d, 1 has %d " % (len_false, len_true)
 
     seed = 1
     np.random.seed(seed)
