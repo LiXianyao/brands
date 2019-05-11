@@ -21,8 +21,8 @@ class BrandTrainData(Base):
     # 查询构造器
     query = db_session.query_property()
 
-    def __init__(self, brand_no, brand_name, brand_sts, apply_date, class_no, his_no,
-                 his_name, his_sts, his_date, similarity, is_similar):
+    def __init__(self, brand_no=None, brand_name=None, brand_sts=None, apply_date=None, class_no=None, his_no=None,
+                 his_name=None, his_sts=None, his_date=None, similarity=None, is_similar=None):
         self.brand_no = brand_no
         self.brand_name = brand_name
         self.brand_sts = brand_sts
