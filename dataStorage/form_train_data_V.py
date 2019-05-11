@@ -21,8 +21,8 @@ class TrainDataFormer:
 
     limit = [
         {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "range": "apply_date < '2015'", "id":"train_before2015"},
-        {"func": lambda x: "2015" < x < "201804", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '201804'","id":"test_after2015"},
-        {"func": lambda x: "201804" < x < "201811", "cnt": 500, "bcnt": 10, "range": "'201804'< apply_date and apply_date < '201811'", "id":"test_after201804"}
+        {"func": lambda x: "2015" < x < "201803", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '201803'","id":"train_after2015"},
+        {"func": lambda x: "201803" < x < "201806", "cnt": 500, "bcnt": 10, "range": "'201803'< apply_date and apply_date < '201806'", "id":"test_after201803"}
              ]
 
     u""" 训练数据 mysql表:
