@@ -17,7 +17,7 @@ def compute_similar(brand_name, his_name, gate):
         if gate[index] == 'C':
             if len(brand_name) < 4 and compare_Res[index] >= 0.67:
                 similar = True
-            elif len(brand_name) >= 4 and compare_Res[index] >= 0.67:
+            elif len(brand_name) >= 4 and compare_Res[index] >= 0.8:
                 similar = True
         elif gate[index] == 'N':
             continue

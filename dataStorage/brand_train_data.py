@@ -17,11 +17,12 @@ class BrandTrainData(Base):
     his_date = Column(String(8))
     his_sts = Column(Boolean)
     similarity = Column(String(256))
+    is_similar = Column(Boolean)
     # 查询构造器
     query = db_session.query_property()
 
     def __init__(self, brand_no, brand_name, brand_sts, apply_date, class_no, his_no,
-                 his_name, his_sts, his_date, similarity):
+                 his_name, his_sts, his_date, similarity, is_similar):
         self.brand_no = brand_no
         self.brand_name = brand_name
         self.brand_sts = brand_sts
@@ -32,6 +33,7 @@ class BrandTrainData(Base):
         self.his_sts = his_sts
         self.his_date = his_date
         self.similarity = similarity
+        self.is_similar = is_similar
 
     def checkSegment(self):
         if len(self.brand_name) * 3 > 64:

@@ -22,9 +22,9 @@ class TrainDataFormer:
     item_key_prefix = "bItem::"
 
     limit = [
-        {"func": lambda x: x < "2015", "cnt":100, "bcnt":10, "upb": "2015"},
-        {"func": lambda x: "2015" < x < "2017", "cnt": 100, "bcnt": 10, "upb": "2017"},
-        {"func": lambda x: "2017" < x < "201811", "cnt": 100, "bcnt": 10, "upb": "201811"}
+        {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "upb": "2015"},
+        {"func": lambda x: "2015" < x < "2017", "cnt": 500, "bcnt": 10, "upb": "2017"},
+        {"func": lambda x: "2017" < x < "201811", "cnt": 500, "bcnt": 10, "upb": "201811"}
              ]
 
     u""" 训练数据 mysql表:
@@ -36,7 +36,11 @@ class TrainDataFormer:
 
     def __init__(self, store_file=False, store_mysql=False):
         self.redis_con = RedisConnection()
-        self.gate = ['C', 0.67, 'C', 'C', 'N', 0.67, 0.67, 'C', 'C', 1.0]
+        # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）0.9， 包含被包含（越大越近）
+        # 排列组合（越大越近）， 中文含义近似（越大越近）0.9， 中文字形近似（越大越近）0.9
+        # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
+        # 数字完全匹配（越大越近）
+        self.gate = ['C', 0.9, 'C', 'C', 0.9, 0.9, 'C', 'C', 'C', 1.0]
         self.store_batch = 100
         self.delta_mysql_time = 0.
         #构造训练数据
@@ -137,7 +141,7 @@ class TrainDataFormer:
                             continue
                         similarity = json.dumps(compare_Res)
                         train_data = BrandTrainData(brand_no, brand_name,brand_status, apply_date, class_no, his_brand_no,
-                                                    his_name, his_brand_sts, his_apply_date, similarity)
+                                                    his_name, his_brand_sts, his_apply_date, similarity, similar)
                         train_data_cache.append(train_data)
                         cnt_b[similar_loc] += 1
 
