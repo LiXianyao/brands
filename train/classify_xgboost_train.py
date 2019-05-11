@@ -1,6 +1,4 @@
 # -*- coding:utf-8 -*-#
-import json
-import re
 import csv
 import xgboost as xgb
 import getopt
@@ -22,18 +20,12 @@ sys.setdefaultencoding('utf-8')
 4、使用模型对验证集的数据进行预测
 5、预测结果输出到csv文件
 """
-def train_model( taskId, boost_parameters, train_parameters, train_statistics, model_id="N0001"):
-    input_train_file_name = taskId + "_train"
-    input_test_file_name = taskId + "_test"
+def train_model(train_id, test_id, boost_parameters, train_parameters, train_statistics, model_id="N0001"):
+    input_train_file_name = train_id + "_input"
+    input_test_file_name = test_id + "_input"
 
     """读取训练集和验证集"""
-    try:
-        data_train = xgb.DMatrix('data/input/' + input_train_file_name)
-    except:
-        taskId = '0' + taskId
-        input_train_file_name = taskId + "_train"
-        input_test_file_name = taskId + "_test"
-        data_train = xgb.DMatrix('data/input/' + input_train_file_name)
+    data_train = xgb.DMatrix('data/input/' + input_train_file_name)
     data_test = xgb.DMatrix('data/input/' + input_test_file_name)
     f_test = open('data/input/' + input_test_file_name + "_content")
     data_test_context = f_test.readlines()
@@ -41,7 +33,7 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
     print("train file size is: ",data_train.num_col(), data_train.num_row())
     print("test file size is: ", data_test.num_col(), data_test.num_row())
     # print( type(data_train))
-    taskId += "_" + model_id
+    train_id += "_" + model_id
     """............................................."""
     # 设置默认模型参数列表
     # eta是用来防止过拟合的因子（公式中的v）,为了防止过拟合，更新过程中用到的收缩步长。在每次提升计算之后，算法
@@ -69,11 +61,11 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
                     , evals=watchlist, early_stopping_rounds=deafault_train_parameters['early_stopping_rounds'])
 
     # 保存模型
-    model_name = taskId + '.model'
+    model_name = train_id + '.model'
     """保存模型"""
     bst.save_model('models/' + model_name)
     #保存参数
-    f_param = open('models/' + taskId + '_parameters.txt',"w")
+    f_param = open('models/' + train_id + '_parameters.txt',"w")
     f_param.write(str(deafault_boost_parameters) + '\n')
     f_param.write(str(deafault_train_parameters) + '\n')
     f_param.close()
@@ -90,7 +82,7 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
     cost_time_s = (end_time_s - start_time_s).total_seconds()
     y = data_test.get_label()
 
-    csv_name = taskId + "_test_result.csv"
+    csv_name = train_id + "_test_result.csv"
     f_out = open('testRes/' + csv_name,"w")
     writer = csv.writer(f_out)
     title = [u"预测分类",u"预测概率",u"原标签",u"分类与原标签是否匹配",u"输入商标名称", u"历史商标名称", u"所属小项"]
@@ -174,7 +166,7 @@ def train_model( taskId, boost_parameters, train_parameters, train_statistics, m
     writer = csv.writer(f_out)
     if len(title) != 0:
         writer.writerow(title)
-    statistics_row = [str(taskId), deafault_train_parameters["num_boost_round"], deafault_boost_parameters["max_depth"],
+    statistics_row = [str(train_id), deafault_train_parameters["num_boost_round"], deafault_boost_parameters["max_depth"],
                       deafault_boost_parameters["subsample"], deafault_boost_parameters["colsample_bytree"], deafault_boost_parameters["colsample_bylevel"],
                       len(y_hat), error, error_rate, start_time_s, end_time_s, cost_time_s]
 
@@ -361,7 +353,7 @@ def init_train_model(action, configFile = "train_models.config"):
         configFile)  # 读取训练配置文件
     if action == 'train':
         print "now train:"
-        train_model(str(action_parameters_dict['time_stamp']), boost_parameters_dict, train_parameters_dict,
+        train_model(str(action_parameters_dict['train_data_id']), str(action_parameters_dict['test_data_id']), boost_parameters_dict, train_parameters_dict,
                     statistics_files_dict['train_statistics'], model_id=str(action_parameters_dict['model_id']))
     elif action == 'test':
         print "now test:"
