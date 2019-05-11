@@ -117,9 +117,9 @@ def train_model(train_id, test_id, boost_parameters, train_parameters, train_sta
         else: ##实际分类与预测一致
             TP[int(y[i])] += 1
         out_row.extend([int(y[i]), res])
-        this_name = data_test_context[i].split("&*(")[0]
-        his_name = data_test_context[i].split("&*(")[1]
-        product_no = data_test_context[i].split("&*(")[-1]
+        this_name = data_test_context[i].split(",")[0]
+        his_name = data_test_context[i].split(",")[1]
+        product_no = data_test_context[i].split(",")[-1]
         out_row.extend([this_name, his_name, product_no])
         writer.writerow(out_row)
 
@@ -258,9 +258,9 @@ def test_model( taskId, model_name):
         else: ##实际分类与预测一致
             TP[int(y[i])] += 1
         out_row.extend([int(y[i]), res])
-        this_name = data_test_context[i].split("&*(")[0]
-        his_name = data_test_context[i].split("&*(")[1]
-        product_no = data_test_context[i].split("&*(")[-1]
+        this_name = data_test_context[i].split(",")[0]
+        his_name = data_test_context[i].split(",")[1]
+        product_no = data_test_context[i].split(",")[-1]
         out_row.extend([this_name, his_name, product_no])
         writer.writerow(out_row)
 
