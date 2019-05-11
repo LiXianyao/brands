@@ -48,7 +48,7 @@ def train_Data(train_data_list, taskId=taskId):
 
     print " 0 has %d, 1 has %d "%(len(input_lines[0]),len(input_lines[1]))
     u""" 取两者之小作为 """
-    limit = min(len(input_lines[0]),len(input_lines[1])) * 1.5
+    limit = int(min(len(input_lines[0]),len(input_lines[1])) * 1.1)
     train_lines = input_lines[0][:limit]
     len_false = len(train_lines)
     train_lines.extend(input_lines[1][:limit])
