@@ -16,6 +16,10 @@ redis_port = cf.get("redis","redis_port")
 redis_db = cf.get("redis","redis_db")
 redis_pwd = cf.get("redis","redis_pwd")
 
+u"""
+此脚本已成废案，预计过个把月删掉
+"""
+
 from processdata.brand_item import BrandItem
 from similarity import brand
 import csv
@@ -241,7 +245,7 @@ def form_train_data_redis(lowb, num, csv_name, limit_date, taskid):
         if cnt_status['0'] >= (lowb + num) and cnt_status["1"] >= (lowb + num):
             break
     f_out.close()
-    from trans_train_data_II import init_trans
+    from trans_train_data_mysql import init_trans
     init_trans(taskId=taskid)  ##调用文件，将csv数据转化
 
 ###计算拼音共同下界
