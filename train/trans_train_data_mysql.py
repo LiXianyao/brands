@@ -24,7 +24,7 @@ def train_Data(train_data_list, taskId=taskId):
         ##是否相似商标
         is_similar = data.is_similar
         ##商标状态
-        this_status = data.brand_sts
+        this_status = int(data.brand_sts)
         ##历史商标状态
         his_status = data.his_sts
         #if len(input_lines[this_status]) >= upb:
