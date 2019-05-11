@@ -21,8 +21,8 @@ class TrainDataFormer:
 
     limit = [
         {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "range": "apply_date < '2015'", "id":"train_before2015"},
-        {"func": lambda x: "2015" < x < "201803", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '201803'","id":"train_after2015"},
-        {"func": lambda x: "201803" < x < "201806", "cnt": 500, "bcnt": 10, "range": "'201803'< apply_date and apply_date < '201806'", "id":"test_after201803"}
+        {"func": lambda x: "2015" < x < "201804", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '201804'","id":"train_after2015"},
+        {"func": lambda x: "201804" < x < "201806", "cnt": 500, "bcnt": 10, "range": "'201804'< apply_date and apply_date < '201806'", "id":"test_after201804"}
              ]
 
     u""" 训练数据 mysql表:
@@ -81,7 +81,11 @@ class TrainDataFormer:
         for class_no in range(1, 46):
             idkey = self.rank_key_prefix + "%d::cnt" % (class_no)
             idcnt = int(db.get(idkey))
-            for idx in range(1, idcnt + 1):
+            id_list = range(1, idcnt + 1)
+            np.random.seed(class_no)
+            np.random.shuffle(id_list) # 打乱取数的顺序（否则总是取到的数据很不集中）
+
+            for idx in id_list:
                 self.batch_store(cnt_suc, cnt_b_suc, store_mysql, insert_list)
                 data_key = self.data_key_prefix + "%d::%d"%( class_no, idx)
                 info_data = db.hgetall(data_key)
@@ -155,7 +159,7 @@ class TrainDataFormer:
                     cnt_b_suc[class_no] += cnt_b
                     del compare_list
                 u""" 某一类的商标数达到目标则结束这个类别的检索 """
-                if np.sum(cnt_res[class_no][loc]) == 2 * cnt_limit:
+                if np.sum(cnt_res[class_no]) == len(self.limit) * 2 * cnt_limit:
                     break
             class_suc_cnt = np.sum(cnt_res[class_no], axis=0)
             logger.info(u"国际分类%d的商标检索已结束，共计提取样本%d个，其中%d个通过商标样本和%d个不通过商标样本" % (class_no,cnt_suc[class_no], class_suc_cnt[1], class_suc_cnt[0]))
