@@ -140,13 +140,13 @@ def train_model(train_id, test_id, boost_parameters, train_parameters, train_sta
     print "start at %s, end at %s" % (nowtime, endtime)
     f_record.write("start at %s, end at %s" % (nowtime, endtime))
     print "类别1的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
-          (TP[1], TN[1], FP[1], float(TP[1])/(TP[1] + TN[1]), float(TP[1])/(TP[1] + FP[1]))
+          (TP[1], TN[1], FP[1], float(TP[1])/(TP[1] + TN[1] + 1), float(TP[1])/(TP[1] + FP[1] + 1))
     f_record.write("类别1的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
-          (TP[1], TN[1], FP[1], float(TP[1])/(TP[1] + TN[1]), float(TP[1])/(TP[1] + FP[1])))
+          (TP[1], TN[1], FP[1], float(TP[1])/(TP[1] + TN[1] + 1), float(TP[1])/(TP[1] + FP[1] + 1)))
     print "类别0的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
-          (TP[0], TN[0], FP[0], float(TP[0]) / (TP[0] + TN[0]), float(TP[0]) / (TP[0] + FP[0]))
+          (TP[0], TN[0], FP[0], float(TP[0]) / (TP[0] + TN[0] + 1), float(TP[0]) / (TP[0] + FP[0] + 1))
     f_record.write("类别0的 TP=%d, TN=%d, FP=%d, 准确率=%.2f, 召回率=%.2f" % \
-                   (TP[0], TN[0], FP[0], float(TP[0]) / (TP[0] + TN[0]), float(TP[0]) / (TP[0] + FP[0])))
+                   (TP[0], TN[0], FP[0], float(TP[0]) / (TP[0] + TN[0] + 1), float(TP[0]) / (TP[0] + FP[0] + 1)))
 
     #####输出各种指标到csv文件
     csv_name = train_statistics
