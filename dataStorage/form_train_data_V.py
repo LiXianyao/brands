@@ -20,9 +20,9 @@ class TrainDataFormer:
     item_key_prefix = "bItem::"
 
     limit = [
-        {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "range": "apply_date < '2015'", "id":"train_before2015"},
-        {"func": lambda x: "2015" < x < "201804", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '201804'","id":"train_after2015"},
-        {"func": lambda x: "201804" < x < "201806", "cnt": 500, "bcnt": 10, "range": "'201804'< apply_date and apply_date < '201806'", "id":"test_after201804"}
+        {"func": lambda x: x < "2015", "cnt":100, "bcnt":10, "range": "apply_date < '2015'", "id":"train_before2015"},
+        {"func": lambda x: "2015" < x < "2017", "cnt": 100, "bcnt": 10, "range": "'2015'< apply_date and apply_date < '2017'","id":"train_after2015"},
+        {"func": lambda x: "2017" < x < "201805", "cnt": 100, "bcnt": 10, "range": "'2017'< apply_date and apply_date < '201806'", "id":"test_after2017"}
              ]
 
     u""" 训练数据 mysql表:
