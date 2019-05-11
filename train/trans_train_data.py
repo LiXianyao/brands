@@ -9,7 +9,12 @@ sys.path.append("..")
 reload(sys)
 sys.setdefaultencoding( "utf-8" )
 
-def train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict):
+u"""时间戳！！用于区分同一套模型/训练数据/测试数据"""
+nowtime = time.strftime("%Y%m%d%H%M", time.localtime())
+configFile = "train.config"
+taskId = "default_train_" + nowtime
+
+def train_Data(task_dict, taskId=taskId):
     row_len = 18
     csv_name = task_dict["train_set"]
     input_train_file_name = taskId + "_train"
@@ -85,8 +90,8 @@ def train_Data(taskId, task_dict, boost_parameters_dict, train_parameters_dict):
     np.random.shuffle(test_lines)
     print "train size %d, test size %d"%(len(train_lines), len(test_lines))
 
-    save_input_file(train_lines,"data/input/" + input_train_file_name)
-    save_input_file(test_lines, "data/input/" + input_test_file_name)
+    save_input_file(train_lines,"../train/data/input/" + input_train_file_name)
+    save_input_file(test_lines, "../train/data/input/" + input_test_file_name)
 
 
 def save_input_file(input_lines, input_file_name):

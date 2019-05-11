@@ -56,7 +56,7 @@ def train_Data(train_data_list, taskId=taskId):
     np.random.shuffle(train_lines)
     print "train size %d"%(len(train_lines))
 
-    save_input_file(train_lines,"data/input/" + input_train_file_name)
+    save_input_file(train_lines,"../train/data/input/" + input_train_file_name)
 
 def save_input_file(input_lines, input_file_name):
     with open(input_file_name, "w") as input_file:
