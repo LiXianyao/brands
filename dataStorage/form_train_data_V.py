@@ -1,17 +1,15 @@
 #-*-coding:utf8-*-#
 import time
-import traceback
 from storage_connection import RedisConnection
 from brand_train_data import BrandTrainData, db_session
 import sys
-from pypinyin import lazy_pinyin, Style
-from itertools import combinations
 import json
 reload(sys)
 sys.setdefaultencoding("utf-8")
 sys.path.append('..')
 from consoleLogger import logger
-from similarity import strFunction, brand, compute
+from similarity import compute
+from itertools import combinations
 import numpy as np
 
 class TrainDataFormer:
@@ -72,6 +70,8 @@ class TrainDataFormer:
     处理基本信息的函数
     """
     def form_train_data(self, store_mysql):
+        from similarity import strFunction, brand, compute
+        from pypinyin import lazy_pinyin, Style
         ##先处理基本信息
         insert_list = []
         db = self.redis_con.db
@@ -219,10 +219,11 @@ class TrainDataFormer:
     def mysql2input_file(self):
         condition = "is_similar is null"
         from train.trans_train_data_mysql import train_Data
+        from sqlalchemy import text
         for limit in self.limit:
             filter_str = limit["range"] + " and %s" % condition
             taskId = limit["id"]
-            train_data = BrandTrainData().query.filter(filter_str).all()
+            train_data = BrandTrainData().query.filter(text(filter_str)).all()
             print len(train_data)
             print train_data[0]
             train_Data(train_data, taskId=taskId)
