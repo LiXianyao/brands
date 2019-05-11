@@ -22,9 +22,9 @@ class TrainDataFormer:
     item_key_prefix = "bItem::"
 
     limit = [
-        {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "upb": "2015"},
-        {"func": lambda x: "2015" < x < "2017", "cnt": 500, "bcnt": 10, "upb": "2017"},
-        {"func": lambda x: "2017" < x < "201811", "cnt": 500, "bcnt": 10, "upb": "201811"}
+        {"func": lambda x: x < "2015", "cnt":500, "bcnt":10, "range": "apply_date < '2015'", "id":"train_before2015"},
+        {"func": lambda x: "2015" < x < "2017", "cnt": 500, "bcnt": 10, "range": "'2015'< apply_date < '2017'","id":"test_after2015"},
+        {"func": lambda x: "2017" < x < "201811", "cnt": 500, "bcnt": 10, "range": "'2017'< apply_date < '201811'", "id":"test_after2017"}
              ]
 
     u""" 训练数据 mysql表:
@@ -217,10 +217,15 @@ class TrainDataFormer:
 
     u""" 根据查询条件从mysql中取出对应的数据，转换保存为input文件 """
     def mysql2input_file(self):
-        filter_str = "is_similar is null"
-        train_data = BrandTrainData().query.filter(filter_str).all()
-        print len(train_data)
-        print train_data[0]
+        condition = "is_similar is null"
+        from train.trans_train_data_mysql import train_Data
+        for limit in self.limit:
+            filter_str = limit["range"] + " and %s" % condition
+            taskId = limit["id"]
+            train_data = BrandTrainData().query.filter(filter_str).all()
+            print len(train_data)
+            print train_data[0]
+            train_Data(train_data, taskId=taskId)
 
 
 
