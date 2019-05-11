@@ -41,10 +41,10 @@ class TrainDataFormer:
         # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
         # 数字完全匹配（越大越近）
         self.gate = ['C', 0.9, 'C', 'C', 0.9, 0.9, 'C', 'C', 'C', 1.0]
-        self.store_batch = 100
+        self.store_batch = 1000
         self.delta_mysql_time = 0.
         #构造训练数据
-        self.form_train_data(store_mysql)
+        #self.form_train_data(store_mysql)
 
     def get_limit_loc(self, apply_date):
         loc = 0
@@ -215,11 +215,22 @@ class TrainDataFormer:
             logger.info(u"%s处理一个batch耗时 %.f分%.f秒" % (name, delta//60, delta%60))
         return end, delta
 
+    u""" 根据查询条件从mysql中取出对应的数据，转换保存为input文件 """
+    def mysql2input_file(self):
+        filter_str = "is_similar is null"
+        train_data = BrandTrainData().query.filter(filter_str).all()
+        print len(train_data)
+        print train_data[0]
+
+
 
 
 ##975418个不同的商标，12277622
 if __name__=="__main__":
     train_data_former = TrainDataFormer(store_file=False, store_mysql=True)
+    u""" 从redis中检索训练数据存到数据库 """
+    #train_data_former.form_train_data(store_mysql=True)
+    train_data_former.mysql2input_file()
 
 
 
