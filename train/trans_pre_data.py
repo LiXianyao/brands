@@ -45,6 +45,7 @@ def compute_class_through_rate_resEntity(data_list, item_list, predict_res, clas
         goodsRate_dict[class_no] = {}
         similar_name_list[class_no] = []
 
+    u""" 封装每行特征数据及其计算结果到实体类 """
     for i in range(len(data_list)):
         this_name = data_list[i][0]
         his_name = data_list[i][1]
@@ -52,13 +53,14 @@ def compute_class_through_rate_resEntity(data_list, item_list, predict_res, clas
         class_no = data_list[i][3]
         ##单条的特征值
         attribute = data_list[i][4: 14]
-        similar_name_list[class_no].append( similarName(compareName=this_name, name=his_name, register_no=his_no, attriList=attribute, predict_rate=round(predict_res[i][1], 2)) )
-
+        similarNameUnit = similarName(compareName=this_name, name=his_name, register_no=his_no, attriList=attribute, predict_rate=round(predict_res[i][1], 2))
+        similar_name_list[class_no].append(similarNameUnit) # 近似名字结果按大类归类组织
+        u""" 维护一个 商标对应商标项对应的预测概率字典 """
         for (item_no, item_name) in item_list[i]:
             if goodsRate_dict[class_no].has_key(item_no) == False:
-                goodsRate_dict[class_no][item_no] = goodsRegisterRate(item_no, item_name, predict_res[i][1])#, his_name)
+                goodsRate_dict[class_no][item_no] = goodsRegisterRate(item_no, item_name, similarNameUnit.predict_rate)#, his_name)
             else:
-                goodsRate_dict[class_no][item_no].updateRate(predict_res[i][1])#, his_name)
+                goodsRate_dict[class_no][item_no].updateRate(similarNameUnit.predict_rate)#, his_name)
 
     res_dict = {}
     for class_no in class_no_set:
