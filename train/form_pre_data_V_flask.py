@@ -18,7 +18,7 @@ item_key_prefix = "bItem::"
 
 ###获取商标的群组和小项名字、编号的映射关系
 def load_brand_item():
-    from processdata import brand_item
+    from dataStorage import brand_item
     item_list = brand_item.BrandItem.query.all()
     #brand_item.db_session.rollback()
     item_dict = {}
