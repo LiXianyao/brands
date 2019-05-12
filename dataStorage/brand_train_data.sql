@@ -10,7 +10,8 @@ create table brand_train_data
   his_sts    tinyint(1)   null,
   class_no   int          null,
   similarity varchar(256) null,
-  id         int auto_increment
+  id         int auto_increment,
+  is_similar tinyint(1) null
     primary key
 );
 
