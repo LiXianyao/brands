@@ -93,18 +93,15 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 if py_judge == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
                         continue
-                end_time_c = datetime.datetime.now()
-                cost_time_c = (end_time_c - start_time_c).total_seconds()
-                print u"两商标计算拼音近似过滤的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
-                start_time_s = datetime.datetime.now()
+                #end_time_c = datetime.datetime.now()
+                #cost_time_c = (end_time_c - start_time_c).total_seconds()
+                #print u"两商标计算拼音近似过滤的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 similar, compare_Res = compute.compute_similar(brand_name, his_name, gate)
                 #if similar == True:
                 #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
                 #else:
                 #    logger.info("XXXXX%s,%s,%s,%s" % (brand_name, his_name, str(compare_Res), str(similar)))
-                end_time_c = datetime.datetime.now()
-                cost_time_c = (end_time_c - start_time_c).total_seconds()
-                print u"两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                #print u"两商标计算十种特征值的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 if similar == True:
                     similar_cnt[class_no] += 1 ###构造返回结果：近似商标名（及特征）
                     out_row = [brand_name, his_name, brand_no_his, class_no]

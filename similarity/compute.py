@@ -48,7 +48,7 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
         cnt_comm = brand.maxMatchLen(b_list, h_list)
 
     # print "py check ===> ", b_list, h_list, cnt_comm
-    if h_len > cnt_comm + 3:  ##字数比较，被比较商标与输入商标，在公有部分的基础上长4以上就pass
+    if h_len > cnt_comm + 2:  ##字数比较，被比较商标与输入商标，在公有部分的基础上长4以上就pass
         return False
 
     if b_len < 3 and cnt_comm > 0 and h_len < cnt_comm + 2:
