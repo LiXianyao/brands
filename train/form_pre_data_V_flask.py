@@ -129,7 +129,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
 
     try:  ###使用特征数据计算分类
         reload(trans_pre_data)
-        itemList = getItemListOfBrand(return_list, item_dict, _pipe)  ###查同音商标名注册的商品项
+        itemList = getItemListOfBrand(return_list, item_dict, _pipe, logger)  ###查同音商标名注册的商品项
         return_list = trans_pre_data.trans_pre_data_web(return_list, itemList, class_no_set, item_dict=item_dict)
         for categoryResult in return_list.values():
             logger.debug(u"类别 %d 有 %d 条近似商标名" % (categoryResult.getInfo()))
@@ -168,7 +168,7 @@ def get_pycombi(db, combi, class_no):
     return inter, combi_str
 
 ##根据给定的商标id和大类。获取这个商标在这个大类下的小项id
-def getItemListOfBrand(data_list , item_dict, _pipe):
+def getItemListOfBrand(data_list , item_dict, _pipe, logger):
     for brand in data_list:
         class_no = brand[3]
         bid = brand[-1]
@@ -181,8 +181,10 @@ def getItemListOfBrand(data_list , item_dict, _pipe):
         trans_itemList_i = []
         class_no = data_list[i][3]
         for item_no in itemList[i]:
-            trans_itemList_i.append(item_dict[class_no][item_no])
-        #print trans_itemList_i
+            try:
+                trans_itemList_i.append(item_dict[class_no][item_no])
+            except:
+                logger.debug(u"执行异常，未命中商品项数据： 国际分类%s, 商品项编号%s" % (str(class_no), str(item_no)))
         itemList[i] = trans_itemList_i
     return itemList
 
