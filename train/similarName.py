@@ -43,7 +43,7 @@ class similarName:
         #    print title , rate
         (self.rate, self.rateTitle) = (None, None)
         for (rate, title) in attriList:
-            if rate >= 0.5:  ###先按照优先级顺序找第一个满足阈值的类别
+            if rate >= 0.67:  ###先按照优先级顺序找第一个满足阈值的类别
                 (self.rate, self.rateTitle) = (rate, title)
                 break
 
