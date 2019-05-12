@@ -20,10 +20,10 @@ accesslog = "/dev/null"#访问日志文件的路径
 errlog = "/dev/null"
 
 acclog = logging.getLogger('gunicorn.access')
-acclog.addHandler(WatchedFileHandler('/home/lab/brands/project/flask/log/gunicorn_access.log'))
+acclog.addHandler(WatchedFileHandler('../flask/log/gunicorn_access.log'))
 acclog.propagate = False
 errlog = logging.getLogger('gunicorn.error')
-errlog.addHandler(WatchedFileHandler('/home/lab/brands/project/flask/log/gunicorn_error.log'))
+errlog.addHandler(WatchedFileHandler('../flask/log/gunicorn_error.log'))
 errlog.propagate = False
 
 #启动的进程数
