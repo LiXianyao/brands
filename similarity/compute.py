@@ -5,15 +5,20 @@ sys.path.append("..")
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+similar_gate_low = 0.67
+similar_gate_high = 0.8
+py_combi_lowb = 0.5
+py_rate_lowb = 0.3
+
 # 计算两个输入商标的相似度
 def compute_similar(brand_name, his_name, gate):
     compare_Res = brand.getCharacteristics(brand_name, his_name)
     similar = False
     for index in range(len(compare_Res)):
         if gate[index] == 'C':
-            if len(brand_name) < 4 and compare_Res[index] >= 0.67:
+            if len(brand_name) < 4 and compare_Res[index] >= similar_gate_low:
                 similar = True
-            elif len(brand_name) >= 4 and compare_Res[index] >= 0.8:
+            elif len(brand_name) >= 4 and compare_Res[index] >= similar_gate_high:
                 similar = True
         elif gate[index] == 'N':
             continue
@@ -49,7 +54,7 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     if b_len < 3 and cnt_comm > 0 and h_len < cnt_comm + 2:
         # 输入商标的长度只有1或者2， 那么共有部分必须是1或者2
         return True
-    elif b_len >= 3 and cnt_comm >= max(int(len(b_list) * 0.28), 2):  #
+    elif b_len >= 3 and cnt_comm >= max(int(len(b_list) * py_rate_lowb), 2):  #
         # 输入商标长度为3或者以上，那么部分重合就可以
         return True
     return False
@@ -63,4 +68,4 @@ def compute_py_lowb(brand_name_pinyin):
         return max(len(b_list) - 1, 1)
     else:
         # print b_list,h_list
-        return max(int(len(b_list) * 0.5), 2)
+        return max(int(len(b_list) * py_combi_lowb), 2)
