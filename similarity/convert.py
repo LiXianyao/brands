@@ -87,18 +87,25 @@ def contain(_str1,_str2):
 
 
 def result(_str1,_str2,lable):
-    _str1 = get_china_str(_str1)
-    _str2 = get_china_str(_str2)
-    if _str1 == _str2:
-        return 1, u"名字完全相同 1", 0.
-    elif lable == "汉字字形相似度":
-        return 8, u"字形相近 8", None
-    elif lable == "拼音相似度":
-        return pinyin2(_str1,_str2)
-    elif lable == "汉字包含被包含":
-        return contain(_str1,_str2)
+    cn_str1 = get_china_str(_str1)
+    cn_str2 = get_china_str(_str2)
+
+    if len(cn_str1) or len(cn_str2):
+        if cn_str1 == cn_str2:
+            return 1, u"名字完全相同 1", 0.
+        elif lable == "汉字字形相似度":
+            return 8, u"字形相近 8", None
+        elif lable == "拼音相似度":
+            return pinyin2(cn_str1,cn_str2)
+        elif lable == "汉字包含被包含":
+            return contain(cn_str1,cn_str2)
+        else:
+            return 16, lable + u" 16", None
     else:
-        return 16, lable + u" 16", None
+        if _str1 == _str2:
+            return 1, u"名字完全相同 1", 0.
+        else:
+            return 16, lable + u" 16", None
 
 if __name__ == "__main__":
     print "%s"% result(u"中华", u"中华好", "拼音相似度")[1]
