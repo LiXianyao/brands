@@ -108,7 +108,7 @@ class TrainDataFormer:
                 brand_name_num, brand_name_eng, character_set = strFunction.get_not_china_list(brand_name)
                 brand_name_pinyin.extend(brand_name_eng)
 
-                compare_list = self.get_pysimilar_unit(brand_name_pinyin, db, class_no)
+                compare_list = self.get_pysimilar_unit(brand_name_pinyin + character_set, db, class_no)
                 cnt_b = np.zeros([2], dtype=int)  # 对当前这个待查商标的近似商标的计数
                 if compare_list: #非空，即找到了近似商标
                     train_data_cache = []

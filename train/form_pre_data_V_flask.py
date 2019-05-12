@@ -49,7 +49,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     start_time_c = datetime.datetime.now()
 
     return_list = []
-    py_low = compute.compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
+    py_low = compute.compute_py_lowb(brand_name_pinyin + character_set)##根据长度确定确定排列组合的下界
     py_combi = combinations(brand_name_pinyin, py_low)
     combi_store = set()
     try:
