@@ -48,10 +48,6 @@ def divided_categories(process_num, input_json, data_per_process):
     categ_len = len(categories)
     ##类别太少 -》 减进程数； 类别足够=》直接划分
 
-    cf = ConfigParser.ConfigParser()
-    cf.read("redis.config")
-    data_per_process = int(cf.get("multiProcess", "data_per_process"))
-
     min_data = data_per_process
     divided_categ = []
     if categ_len/min_data < process_num: ##进程数偏多
