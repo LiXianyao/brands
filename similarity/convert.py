@@ -102,7 +102,7 @@ def result(_str1,_str2,lable):
         else:
             return 16, lable + u" 16", None
     else:
-        if _str1 == _str2:
+        if _str1.lower() == _str2.lower():
             return 1, u"名字完全相同 1", 0.
         else:
             return 16, lable + u" 16", None
