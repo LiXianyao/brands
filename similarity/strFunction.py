@@ -64,7 +64,7 @@ def get_not_china_list(_str):
             eng_list.append(str_i)
             for letter in str_i:
                 character_set.add(letter)
-    return num_list, eng_list, character_set
+    return num_list, eng_list, list(character_set)
 
 u""" 返回中文与英文部分的拼接串 """
 def concate(his_name_pinyin, his_name_eng):
