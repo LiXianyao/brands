@@ -56,6 +56,9 @@ def judge_pinyin(brand_name_pinyin, his_name_pinyin):
     b_len = len(b_list)
     h_len = len(h_list)
 
+    if h_len > b_len + 2:  ##字数比较，被比较商标与输入商标，不管怎么说长度过长的时候共有部分一定不行了
+        return False
+
     cnt_comm = 0
     if b_len <= 3:  ##商标长度小于等于3时，按乱序查找。即只要h串里有就行（可能重音，要标记）
         h_vis = [False] * (h_len)
