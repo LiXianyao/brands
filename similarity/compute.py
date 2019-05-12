@@ -10,8 +10,15 @@ similar_gate_high = 0.8
 py_combi_lowb = 0.5
 py_rate_lowb = 0.3
 
+# 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）0.9， 包含被包含（越大越近）
+# 排列组合（越大越近）， 中文含义近似（越大越近）0.9， 中文字形近似（越大越近）0.9
+# 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
+# 数字完全匹配（越大越近）
+u""" 默认门限值 """
+default_gate = ['C', 0.8, 'C', 'C', 0.9, 0.9, 'C', 'C', 'C', 1.0]
+
 # 计算两个输入商标的相似度
-def compute_similar(brand_name, his_name, gate):
+def compute_similar(brand_name, his_name, gate=default_gate):
     compare_Res = brand.getCharacteristics(brand_name, his_name)
     similar = False
     for index in range(len(compare_Res)):
@@ -26,6 +33,21 @@ def compute_similar(brand_name, his_name, gate):
             if compare_Res[index] >= gate[index]:
                 similar = True
     return similar,  compare_Res
+
+u""" 扫描门限值，并返回第一个满足条件的门限值下标 """
+def search_gate(attri_list, gate_list):
+    for index in range(len(attri_list)):
+        rate, title = attri_list[index]
+        gate, title = gate_list[index]
+        if gate == 'C':
+            if rate >= similar_gate_low:
+                return rate, title
+        elif gate == 'N':
+            continue
+        else:
+            if rate >= gate:
+                return rate, title
+    return None, None
 
 ###判断两个商标中是否有同音字
 def judge_pinyin(brand_name_pinyin, his_name_pinyin):

@@ -1,6 +1,6 @@
 #-*-coding:utf8-*-#
 from similarity import convert
-from similarity.compute import similar_gate_low
+from similarity.compute import similar_gate_low, default_gate, search_gate
 
 ###各个特征属性的名字（按构造得到的特征数据的顺序）
 attribute_title = [u"汉字编辑距离相似度", u"拼音相似度", u"汉字包含被包含",
@@ -33,21 +33,17 @@ class similarName:
         self.name = name
         self.register_no = register_no
         self.calMaxAttri(attriList)
-        self.convertTag(compareName)
         self.predict_rate = predict_rate
+        self.convertTag(compareName)
+
 
     ###确定优先级最高的特征类型
     def calMaxAttri(self, attriList):
         attriList = zip(attriList, attribute_title)
         attriList.sort(key = sortNames)
-        #print self.name
-        #for  (rate, title) in attriList:
-        #    print title , rate
-        (self.rate, self.rateTitle) = (None, None)
-        for (rate, title) in attriList:
-            if rate >= similar_gate_low:  ###先按照优先级顺序找第一个满足阈值的类别
-                (self.rate, self.rateTitle) = (rate, title)
-                break
+        titledGate = zip(default_gate, attribute_title)
+        titledGate.sort(key = sortNames)
+        (self.rate, self.rateTitle) = search_gate(attriList, titledGate)
 
         if (self.rate, self.rateTitle) == (None, None):
             (self.rate, self.rateTitle) = max(attriList, key=lambda x: x[0])

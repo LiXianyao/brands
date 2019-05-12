@@ -44,12 +44,6 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     logger.debug("brand name is %s, with searching class: %s" % (brand_name, str(class_no_set)))
     error_occur = False ###标记运行期间是否发生错误
 
-    # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）0.9， 包含被包含（越大越近）
-    # 排列组合（越大越近）， 中文含义近似（越大越近）0.9， 中文字形近似（越大越近）0.9
-    # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
-    # 数字完全匹配（越大越近）
-    gate = ['C',0.8,'C','C', 0.9, 0.9, 'C', 'C', 'C',1.0]
-
     similar_cnt = {k: v for k, v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
     last_class = {k: v for k, v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
     start_time_c = datetime.datetime.now()
@@ -96,7 +90,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 #end_time_c = datetime.datetime.now()
                 #cost_time_c = (end_time_c - start_time_c).total_seconds()
                 #print u"两商标计算拼音近似过滤的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
-                similar, compare_Res = compute.compute_similar(brand_name, his_name, gate)
+                similar, compare_Res = compute.compute_similar(brand_name, his_name)
                 #if similar == True:
                 #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
                 #else:
