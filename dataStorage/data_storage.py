@@ -258,11 +258,13 @@ class DataStorage:
                             info_skip_cnt += 1
                             insert_state = 3
                         else:
+                            u""" 更新商标状态 """
+                            self.update_brand_data(class_no, b_id, brand_status)
                             info_ok_cnt += 1
                     u""" redis操作结束 """
                     _, delta_redis_time = self.compute_time_seg(init_redis_time, delta_redis_time, "redis",
                                                                               output=False)
-                if store_mysql == True:##是否转存数据库
+                if store_mysql:##是否转存数据库
                     init_mysql_time = time.time()
                     if insert_state == 4:#更新
                         pass
@@ -357,6 +359,13 @@ class DataStorage:
             cnt_skip = 1
             logger.debug(u"出现不含中文、英文与数字的商标,或者只包含无法解析的字体/符号，商标名：brand %s ,line_no = %d"%(brand_name, line_no))
         return cnt_skip
+
+    def update_brand_data(self, class_no, b_id, cur_sts):
+        ###存储数据
+        data_key = self.data_key_prefix + str(class_no) + "::" + str(b_id)
+        old_sts = int(self.redis_con.db.hget(data_key, "sts"))
+        sts = old_sts or cur_sts
+        self.redis_con.pipe.hset(data_key, "sts", sts)
 
     def load_brand_item(self):
         item_list = BrandItem.query.all()
