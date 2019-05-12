@@ -222,10 +222,12 @@ class TrainDataFormer:
 
     u""" 根据查询条件从mysql中取出对应的数据，转换保存为input文件 """
     def mysql2input_file(self):
-        condition = "is_similar is null"
+        #condition = "is_similar is null"
+        condition = "(brand_sts=1 or is_similar=1)"
         from train.trans_train_data_mysql import train_Data
         from sqlalchemy import text
         for limit in self.limit:
+            u""" 原标签为通过的，高近似度和低近似度商标都要；不通过的只要低近似度商标 """
             filter_str = limit["range"] + " and %s" % condition
             taskId = limit["id"]
             train_data = BrandTrainData().query.filter(text(filter_str)).all()
