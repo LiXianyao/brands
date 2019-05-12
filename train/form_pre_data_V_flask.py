@@ -5,7 +5,7 @@ from pypinyin import lazy_pinyin, Style
 from itertools import combinations
 import datetime
 import trans_pre_data
-from similarity import brand, strFunction
+from similarity import brand, strFunction, compute
 sys.path.append("..")
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -44,18 +44,18 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     logger.debug("brand name is %s, with searching class: %s" % (brand_name, str(class_no_set)))
     error_occur = False ###标记运行期间是否发生错误
 
-    # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）， 包含被包含（越大越近）
-    # 排列组合（越大越近）， 中文含义近似（越大越近）， 中文字形近似（越大越近）
+    # 中文编辑距离(越大越近)， 拼音编辑距离（越大越近）0.9， 包含被包含（越大越近）
+    # 排列组合（越大越近）， 中文含义近似（越大越近）0.9， 中文字形近似（越大越近）0.9
     # 英文编辑距离(越大越近)， 英文包含被包含（越大越近）， 英文排列组合（越大越近）
     # 数字完全匹配（越大越近）
-    gate = ['C',0.67,'C','C', 'N', 0.67, 0.67, 'C', 'C',1.0]
+    gate = ['C',0.8,'C','C', 0.9, 0.9, 'C', 'C', 'C',1.0]
 
     similar_cnt = {k: v for k, v in zip(class_no_set, [0]*len(class_no_set))}  ##累计每个类别找到的近似商标数
     last_class = {k: v for k, v in zip(class_no_set, [None]*len(class_no_set))}  ##保存每个类别的近似商标
     start_time_c = datetime.datetime.now()
 
     return_list = []
-    py_low = compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
+    py_low = compute.compute_py_lowb(brand_name_pinyin)##根据长度确定确定排列组合的下界
     py_combi = combinations(brand_name_pinyin, py_low)
     combi_store = set()
     try:
@@ -83,12 +83,12 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 brand_no_his = compare_unit["no"]
                 his_name_pinyin = compare_unit["py"]
                 his_name_eng = compare_unit["eng"]
-                his_name_pinyin = concate(his_name_pinyin, his_name_eng)
+                his_name_pinyin = strFunction.concate(his_name_pinyin, his_name_eng)
                 his_name_china = compare_unit["ch"]
                 his_name_bid = compare_unit["bid"]
                 last_class[class_no] = compare_unit
                 start_time_s = datetime.datetime.now()
-                py_judge = judge_pinyin(brand_name_pinyin, his_name_pinyin)
+                py_judge = compute.judge_pinyin(brand_name_pinyin, his_name_pinyin)
                 #logger.info("====%s, %s, %s, %s, %s"%(brand_name, his_name, str(py_judge), str(brand_name_pinyin), his_name_pinyin) )
                 if py_judge == False:
                     if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(brand_name_china, his_name_china) < 0.9:
@@ -97,7 +97,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 cost_time_c = (end_time_c - start_time_c).total_seconds()
                 print u"两商标计算拼音近似过滤的时间消耗为：", cost_time_c  ##通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
                 start_time_s = datetime.datetime.now()
-                similar, compare_Res = compute_similar(brand_name, his_name, gate)
+                similar, compare_Res = compute.compute_similar(brand_name, his_name, gate)
                 #if similar == True:
                 #    logger.info(">>>>>%s,%s,%s,%s"%(brand_name, his_name, str(compare_Res), str(similar)))
                 #else:
@@ -194,75 +194,6 @@ def getItemListOfBrand(data_list , item_dict, _pipe):
         #print trans_itemList_i
         itemList[i] = trans_itemList_i
     return itemList
-
-###判断两个商标中是否有同音字
-def judge_pinyin(brand_name_pinyin, his_name_pinyin):
-    b_list = brand_name_pinyin
-    h_list = his_name_pinyin.split(",")
-    b_len = len(b_list)
-    h_len = len(h_list)
-
-    cnt_comm = 0
-    if b_len <= 3: ##商标长度小于等于3时，按乱序查找。即只要h串里有就行（可能重音，要标记）
-        h_vis = [False] * (h_len)
-        for i in range(b_len):
-            for j in range(h_len):
-                #print h_list[j], b_list[i], h_list[j] == b_list[i]
-                if h_vis[j] == False and h_list[j] == b_list[i]:
-                    cnt_comm += 1
-                    h_vis[j] = True
-                    break
-    if b_len > 3:  ##商标长度大于等于3时，按正序查找（就是算最长匹配距离）
-        cnt_comm = brand.maxMatchLen(b_list, h_list)
-
-    #print "py check ===> ", b_list, h_list, cnt_comm
-    if h_len > cnt_comm + 4:  ##字数比较，被比较商标与输入商标，在公有部分的基础上长4以上就pass
-        return False
-
-    if b_len < 3 and cnt_comm > 0 and h_len < cnt_comm + 2:
-        # 输入商标的长度只有1或者2， 那么共有部分必须是1或者2
-        return True
-    elif b_len >= 3 and cnt_comm >= max(int(len(b_list) * 0.28), 2):  #
-        #输入商标长度为3或者以上，那么部分重合就可以
-        return True
-
-    return False
-
-
-###计算拼音共同下界
-def compute_py_lowb(brand_name_pinyin):
-    b_list = brand_name_pinyin
-
-    if len(b_list) < 3:
-        # print b_list, h_list, cnt_comm
-        return max(len(b_list) - 1, 1)
-    else:
-        # print b_list,h_list
-        return max(int(len(b_list) * 0.28), 2)
-
-def compute_similar(brand_name, his_name, gate):
-    compare_Res = brand.getCharacteristics(brand_name, his_name)
-    similar = False
-    for index in range(len(compare_Res)):
-        if gate[index] == 'C':
-            if len(brand_name) < 4 and compare_Res[index] >= 0.5:
-                similar = True
-            elif len(brand_name) >= 4 and compare_Res[index] >= 0.5:
-                similar = True
-        elif gate[index] == 'N':
-            continue
-        else:
-            if compare_Res[index] >= gate[index]:
-                similar = True
-    return similar,  compare_Res
-
-def concate(his_name_pinyin, his_name_eng):
-    if len(his_name_pinyin) > 0:
-        if len(his_name_eng) > 0:
-            his_name_pinyin = his_name_pinyin + "," + his_name_eng
-    elif len(his_name_eng) > 0:
-        his_name_pinyin = his_name_eng
-    return his_name_pinyin
 
 
 

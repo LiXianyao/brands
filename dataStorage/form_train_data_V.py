@@ -126,7 +126,7 @@ class TrainDataFormer:
                         his_name_china = compare_unit["ch"]
                         his_brand_no = compare_unit["no"]
                         his_name_eng = compare_unit["eng"]
-                        his_name_pinyin = self.concate(his_name_pinyin, his_name_eng)
+                        his_name_pinyin = strFunction.concate(his_name_pinyin, his_name_eng)
                         if not compute.judge_pinyin(brand_name_pinyin, his_name_pinyin):
                             if len(brand_name_china) != len(his_name_china) or brand.glyphApproximation(
                                     brand_name_china, his_name_china) < 0.9:
@@ -177,21 +177,12 @@ class TrainDataFormer:
             logger.info(u"训练数据构造中，已检索到%d个满足要求的实例，生成训练样本%d个" % (cur_suc, cur_b_suc))
             ##批量插入
             init_mysql_time = time.time()
-            if store_mysql == True:
+            if store_mysql:
                 logger.info(u"mysql 插入行数 %d" % (len(insert_list)))
                 db_session.add_all(insert_list)
                 db_session.commit()
                 del insert_list[:]
                 _, self.delta_mysql_time = self.compute_time_seg(init_mysql_time, self.delta_mysql_time, "mysql", output=True)
-
-    u""" 返回中文与英文部分的拼接串 """
-    def concate(self, his_name_pinyin, his_name_eng):
-        if len(his_name_pinyin) > 0:
-            if len(his_name_eng) > 0:
-                his_name_pinyin = his_name_pinyin + "," + his_name_eng
-        elif len(his_name_eng) > 0:
-            his_name_pinyin = his_name_eng
-        return his_name_pinyin
 
     def get_pysimilar_unit(self, brand_name_pinyin, db, class_no):
         py_low = compute.compute_py_lowb(brand_name_pinyin)  ##根据长度确定确定排列组合的下界

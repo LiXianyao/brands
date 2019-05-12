@@ -65,3 +65,12 @@ def get_not_china_list(_str):
             for letter in str_i:
                 character_set.add(letter)
     return num_list, eng_list, character_set
+
+u""" 返回中文与英文部分的拼接串 """
+def concate(his_name_pinyin, his_name_eng):
+    if len(his_name_pinyin) > 0:
+        if len(his_name_eng) > 0:
+            his_name_pinyin = his_name_pinyin + "," + his_name_eng
+    elif len(his_name_eng) > 0:
+        his_name_pinyin = his_name_eng
+    return his_name_pinyin
