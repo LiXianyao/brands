@@ -39,7 +39,6 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     brand_name_china = strFunction.get_china_str(brand_name)
     brand_name_pinyin = lazy_pinyin(brand_name_china, style=Style.TONE3)
     brand_name_num , brand_name_eng, character_set = strFunction.get_not_china_list(brand_name)
-    brand_name_pinyin.extend(brand_name_eng)
     class_no_set = input_json["categories"]
     logger.debug("brand name is %s, with searching class: %s" % (brand_name, str(class_no_set)))
     error_occur = False ###标记运行期间是否发生错误
@@ -50,7 +49,8 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
 
     return_list = []
     py_low = compute.compute_py_lowb(brand_name_pinyin + character_set)##根据长度确定确定排列组合的下界
-    py_combi = combinations(brand_name_pinyin, py_low)
+    py_combi = combinations(brand_name_pinyin + character_set, py_low)
+    brand_name_pinyin.extend(brand_name_eng)
     combi_store = set()
     try:
         for class_no in class_no_set:
