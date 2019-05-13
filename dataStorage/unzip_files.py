@@ -40,7 +40,7 @@ class UnzipCarrier:
     def unzip_file(self, zip_file_name):
         try:
             unzip_dir_name = zip_file_name.split(".zip")[0].replace(" ", "")
-            os.system("unzip -o '%s'  -d  '%s/%s'" % (zip_file_name.encode("utf8"), self.saving_dir, unzip_dir_name.encode("utf8")))
+            os.system("unzip -o -z '%s'  -d  '%s/%s'" % (zip_file_name.encode("utf8"), self.saving_dir, unzip_dir_name.encode("utf8")))
             return True
         except:
             logger.error(u"解压压缩包%s时出现错误" % zip_file_name)
