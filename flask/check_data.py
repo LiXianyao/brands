@@ -46,26 +46,14 @@ def check_request_json(input_json):
 def divided_categories(process_num, input_json, data_per_process):
     categories = input_json["categories"]
     categ_len = len(categories)
-    ##类别太少 -》 减进程数； 类别足够=》直接划分
-
-    min_data = data_per_process
     divided_categ = []
-    if categ_len/min_data < process_num: ##进程数偏多
-        min_data += 1 ##去尾，每个进程多处理一个类别的数据
-        new_process_num = categ_len/min_data
-        for i in range( new_process_num ):
-            divided_categ.append(categories[ i * min_data: (i + 1) * min_data])
-        if categ_len % min_data != 0:
-            divided_categ.append(categories[new_process_num * min_data: ])
-            new_process_num += 1
-    else: ####类别足够，直接划分
-        process_data = categ_len / process_num
-        new_process_num = process_num
-        plus_1 =  categ_len % process_num
-        for i in range(process_num):
-            divided_categ.append(categories[ i * process_data : (i + 1) * process_data ] )
-        for i in range(plus_1):
-            divided_categ[i].append(categories[ process_num * process_data + i ] )
+    process_data = categ_len / process_num
+    new_process_num = process_num
+    plus_1 = categ_len % process_num
+    for i in range(process_num):
+        divided_categ.append(categories[ i * process_data : (i + 1) * process_data ] )
+    for i in range(plus_1):
+        divided_categ[i].append(categories[ process_num * process_data + i ] )
 
     input_json["categories"] = divided_categ
     return new_process_num
