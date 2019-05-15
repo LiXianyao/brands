@@ -73,6 +73,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
             py_combi = combi_store
             compare_list = get_union_data(_pipe, class_no, union)
             len_compare = len(compare_list)
+            start_time_com = datetime.datetime.now()
             for i in range(len_compare):
                 compare_unit = compare_list[i]
                 his_name = compare_unit["name"].decode("utf-8")
@@ -102,9 +103,10 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                     return_list.append(out_row)
             end_time_s = datetime.datetime.now()
             cost_time_s = (end_time_s - start_time_s).total_seconds()
+            cost_time_com = (end_time_s - start_time_com).total_seconds()
             logger.info(u"大类%d的拼音近似商标检索的时间消耗为：%.2fs, 总计检索了%d 条商标，其中%d条商标参与近似度计算,"
-                         u"平均检索耗时为 %.2fs, 平均计算耗时为%.2fs"% (class_no, cost_time_s, len_compare, similar_cnt[class_no],
-                        cost_time_s/max(len_compare, 1.0), cost_time_s/max(similar_cnt[class_no], 1.0)))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                         u"平均检索耗时为 %.2fms, 平均计算耗时为%.2fs"% (class_no, cost_time_s, len_compare, similar_cnt[class_no],
+                        cost_time_s/max(len_compare, 1.0) * 1000.0, cost_time_com/max(similar_cnt[class_no], 1.0)))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
             del compare_list
     except:
         error_occur = True
