@@ -102,8 +102,8 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                     return_list.append(out_row)
             end_time_s = datetime.datetime.now()
             cost_time_s = (end_time_s - start_time_s).total_seconds()
-            logger.info(u"两商标计算拼音近似过滤的时间消耗为：%.2fs, 总计检索了%d 条商标，其中%d条商标参与近似度计算,"
-                         u"平均检索耗时为 %.2fs, 平均计算耗时为%.2fs"% (cost_time_s, len_compare, similar_cnt[class_no],
+            logger.info(u"大类%d的拼音近似商标检索的时间消耗为：%.2fs, 总计检索了%d 条商标，其中%d条商标参与近似度计算,"
+                         u"平均检索耗时为 %.2fs, 平均计算耗时为%.2fs"% (class_no, cost_time_s, len_compare, similar_cnt[class_no],
                         cost_time_s/max(len_compare, 1.0), cost_time_s/max(similar_cnt[class_no], 1.0)))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
             del compare_list
     except:
@@ -130,6 +130,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
         error_occur = True
         logger.error(u"补充近似商标时发生异常!!", exc_info=True)
 
+    start_time_p = datetime.datetime.now()
     try:  ###使用特征数据计算分类
         reload(trans_pre_data)
         itemList = getItemListOfBrand(return_list, item_dict, _pipe, logger)  ###查同音商标名注册的商品项
@@ -139,6 +140,9 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     except:
         error_occur = True
         logger.error(u"特征值预测分类或构造返回结果时发生异常!!", exc_info=True)
+    end_time_p = datetime.datetime.now()
+    cost_time_p = (end_time_p - start_time_p).total_seconds()
+    logger.debug(u"进程%d 模型计算及结果构造耗时为 :%s秒"%(os.getpid(), str(cost_time_p)) )
 
     ###调用预测模块添东西
     end_time_c = datetime.datetime.now()
