@@ -130,7 +130,7 @@ def _stroke_generator(chars, encoding):
             list.append("")
     return list
 
-
+from Levenshtein import distance
 def _stroke_edit_dist(seqA, seqB):
     """利用动态规划来计算seqA和seqB的编辑距离。
     Args:
@@ -139,6 +139,7 @@ def _stroke_edit_dist(seqA, seqB):
     Return：
         整数，笔画序列A和笔画序列B的编辑距离
     """
+    return distance(seqA, seqB)
     if seqA == "":
         return len(seqB)
     if seqB == "":

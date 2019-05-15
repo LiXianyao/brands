@@ -42,14 +42,14 @@ def init_String(_str):
 ########################## 特征算法################################
 
 #   中、英文编辑距离
-from Levenshtein import *
+from Levenshtein import distance
 def editDistance(_str1,_str2, ctime=timeDefault):
     start = time.time()
     if len(_str1) == 0 or len(_str2) == 0:
         return 0.0
 
     ##返回值是 1 - 编辑距离/较长串的长度
-    res = 1.0 - distance(_str1,_str2)/max(len(_str1),len(_str2))
+    res = 1.0 - distance(_str1, _str2)/max(len(_str1), len(_str2))
     if ctime:
         init_end = time.time()
         init_cost = init_end - start
@@ -195,7 +195,7 @@ def implicationApproximation(_str1,_str2, ctime=timeDefault):
     start = time.time()
     if len(_str1) == 0 or len(_str2) == 0:
         return 0
-    res = synonyms.compare(_str1,_str2,seg=False, ignore=True) ##有没有必要分词呢？
+    res = synonyms.compare(_str1, _str2, seg=False, ignore=True) ##有没有必要分词呢？
     if ctime:
         init_end = time.time()
         init_cost = init_end - start
