@@ -106,7 +106,8 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
             cost_time_com = (end_time_s - start_time_com).total_seconds()
             logger.info(u"大类%d的拼音近似商标检索的时间消耗为：%.2fs, 总计检索了%d 条商标，其中%d条商标参与近似度计算,"
                          u"平均检索耗时为 %.2fms, 平均计算耗时为%.2fms"% (class_no, cost_time_s, len_compare, similar_cnt[class_no],
-                        cost_time_s-cost_time_com/max(len_compare, 1.0) * 1000.0, cost_time_com/max(similar_cnt[class_no], 1.0) * 1000.0))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                                                            (cost_time_s-cost_time_com)/max(len_compare, 1.0) * 1000.0,
+                                                            cost_time_com/max(similar_cnt[class_no], 1.0) * 1000.0))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
             del compare_list
     except:
         error_occur = True
