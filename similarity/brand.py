@@ -195,6 +195,7 @@ def implicationApproximation(_str1,_str2, ctime=timeDefault):
     start = time.time()
     if len(_str1) == 0 or len(_str2) == 0:
         return 0
+    """
     res = synonyms.compare(_str1, _str2, seg=False, ignore=True) ##有没有必要分词呢？
     if ctime:
         init_end = time.time()
@@ -202,6 +203,8 @@ def implicationApproximation(_str1,_str2, ctime=timeDefault):
         print("synonyms cost time: %.2fs" % (init_cost))
     if math.isnan(res):
         return 0.0
+    """
+    res = 0.0
     return res
 
 
