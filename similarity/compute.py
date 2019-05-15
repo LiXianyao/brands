@@ -5,8 +5,8 @@ sys.path.append("..")
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-similar_gate_low = 0.67
-similar_gate_high = 0.8
+similar_gate_low = 0.66
+similar_gate_high = 0.75
 py_combi_lowb = 0.5
 py_rate_lowb = 0.3
 

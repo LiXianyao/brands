@@ -102,9 +102,9 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                     return_list.append(out_row)
             end_time_s = datetime.datetime.now()
             cost_time_s = (end_time_s - start_time_s).total_seconds()
-            logger.infor(u"两商标计算拼音近似过滤的时间消耗为：%.2fs, 总计检索了%d 条商标，其中%d条商标参与近似度计算,"
+            logger.info(u"两商标计算拼音近似过滤的时间消耗为：%.2fs, 总计检索了%d 条商标，其中%d条商标参与近似度计算,"
                          u"平均检索耗时为 %.2fs, 平均计算耗时为%.2fs"% (cost_time_s, len_compare, similar_cnt[class_no],
-                        cost_time_s/len_compare, cost_time_s/ similar_cnt[class_no]))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
+                        cost_time_s/max(len_compare, 1.0), cost_time_s/max(similar_cnt[class_no], 1.0)))  # 通常在 100~ 150ms，取决于数据，也有2ms就算完的情况
             del compare_list
     except:
         error_occur = True
