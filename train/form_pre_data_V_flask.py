@@ -163,6 +163,7 @@ def get_union_data(_pipe, class_no, union):
 ####从redis中读取读音组合对应的商标号集合
 ##对于2元组，直接取，大于二元组的，用redis去算交集
 def get_pycombi(db, combi, class_no):
+    """
     inter_args = []
     combi_len = len(combi)
     first_key = pyset_key_prefix + str(class_no) + "::" + combi[0]
@@ -174,6 +175,16 @@ def get_pycombi(db, combi, class_no):
         inter_args.append(set_key)
 
     inter = db.sinter(first_key, *tuple(inter_args))
+    """
+    first_key = pyset_key_prefix + str(class_no) + "::" + combi[0]
+    combi_str = combi[0]
+    inter = set(db.smembers(first_key))
+    for i in range(1, len(combi)):
+        set_key = pyset_key_prefix + str(class_no) + "::" + combi[i]
+        data = set(db.smembers(set_key))
+        inter = inter.intersection(data)
+        combi_str += "," + combi[i]
+
     return inter, combi_str
 
 ##根据给定的商标id和大类。获取这个商标在这个大类下的小项id
