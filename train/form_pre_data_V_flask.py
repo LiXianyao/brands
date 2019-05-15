@@ -54,6 +54,7 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
     combi_store = set()
     try:
         for class_no in class_no_set:
+            start_time_s = datetime.datetime.now()
             if py_low > 0:
                 #共有拼音排列组合
                 union = set()
@@ -71,7 +72,6 @@ def form_pre_data_flask(input_json, item_dict, db, _pipe, logger):
                 continue
             py_combi = combi_store
             compare_list = get_union_data(_pipe, class_no, union)
-            start_time_s = datetime.datetime.now()
             len_compare = len(compare_list)
             for i in range(len_compare):
                 compare_unit = compare_list[i]
